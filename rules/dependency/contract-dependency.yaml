@@ -1,0 +1,39 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: dependency
+file: contract-dependency
+rules:
+  - id: dependency/contract-dependency
+    title: A contract dependency needs a network and a checkable basis
+    severity: MUST
+    statement: >
+      A dependency of class CONTRACT MUST name the network its target was observed on.
+      Its basis MUST be one of an observed invocation, an observed event, an attested
+      statement, or a reference the subject's own source or build demonstrably
+      contains. When the basis is an inferred interface, the confidence MUST NOT exceed
+      LOW_CONFIDENCE and the dependency MUST NOT appear among the observed facts of a
+      report. When the basis is an observed invocation, the underlying transaction MUST
+      be recorded as successful.
+    rationale: >
+      A contract address identifies a contract only together with its network, so a
+      CONTRACT dependency without a network is not resolvable to anything a reader could
+      check. The basis restriction is what separates a dependency from a resemblance:
+      two contracts that share an interface shape are extremely common and completely
+      unrelated, so interface inference is permitted only at a confidence level that
+      keeps it out of the established-facts section of a report.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+      - kind: model
+        id: dependencies/contract
+    fixtures:
+      - contract-dependency/direct
+      - invalid/malformed-dependency
+    examples:
+      - impact-analysis
+    checks:
+      - The direct fixture names a network and states OBSERVED_INVOCATION as its basis.
+      - A dependency whose class is outside the taxonomy is rejected rather than treated as unknown.
+      - A report's observed facts carry evidence and an inferred relationship additionally carries an inference basis.
+    nonGoals:
+      - This rule does not assess the target contract's behaviour, correctness or safety.

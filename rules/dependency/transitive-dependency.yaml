@@ -1,0 +1,47 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: dependency
+file: transitive-dependency
+rules:
+  - id: dependency/transitive-dependency
+    title: A transitive dependency must show its path and must not exceed its bound
+    severity: MUST
+    statement: >
+      A dependency of class TRANSITIVE MUST carry the intermediate entities between its
+      source and target, in order, with at least one entry. Its aggregated confidence
+      MUST equal the minimum confidence ordinal among the hops it traverses. A
+      dependency set MUST list every edge that has a dependency class in exactly one of
+      its direct or transitive partitions, MUST set maxDepth, MUST set truncated with a
+      truncationReason when traversal stopped early, and MUST report any cycle it
+      detected with the edge identifiers that form it rather than removing or
+      collapsing the cycle.
+    rationale: >
+      A transitive dependency without its path is indistinguishable from a guess: the
+      reader cannot tell whether the analysis walked a real chain or collapsed two
+      uncertain hops into one confident-looking statement. The confidence clause has
+      the same purpose at a smaller scale, since a chain is only as strong as its
+      weakest link and letting an implementation report the strongest hop would let
+      confidence be manufactured from unrelated evidence. Reporting truncation and
+      cycles exists for the same reason: a bounded search that does not say it was
+      bounded invites a consumer to conclude that a dependency does not exist, when the
+      analysis merely stopped.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency-set.schema.json
+      - kind: model
+        id: dependencies/transitive
+    fixtures:
+      - contract-dependency/transitive
+      - contract-dependency/mixed
+    examples:
+      - contract-with-dependencies
+      - transitive-dependency-graph
+    checks:
+      - The transitive fixture carries a non-empty path and a MEDIUM confidence below its strongest hop.
+      - The mixed fixture's direct and transitive lists together cover every edge that declares a dependency class.
+      - The mixed fixture reports its two-edge cycle rather than resolving it.
+      - The contract-with-dependencies example declares truncation and a truncation reason because its traversal was rate limited.
+    nonGoals:
+      - This rule does not require a traversal to exhaust the graph, only to disclose the bound it used.

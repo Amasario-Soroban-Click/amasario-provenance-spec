@@ -1,0 +1,76 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: dependency
+file: direct-dependency
+rules:
+  - id: dependency/direct-dependency
+    title: A dependency requires a basis and evidence, and is never implied
+    severity: MUST
+    statement: >
+      Every dependency MUST state how it was established and MUST reference at least
+      one evidence record. A dependency MUST NOT be asserted because two entities share
+      a name, mention one another, exist in the same ecosystem, share an operator, or
+      carry similar metadata. When a dependency is represented as an edge whose
+      relationship is DEPENDS_ON, the edge MUST carry a basis. A dependency of class
+      CONTRACT or RUNTIME MUST name the network it was observed on, a dependency of
+      class RUNTIME MUST be established from a transaction recorded as successful, and
+      a dependency edge that reached a network observation MUST record firstObserved
+      with lastObserved not preceding it.
+    rationale: >
+      This is the rule that distinguishes the specification from a correlator. Almost
+      every false dependency in real tooling comes from one of the five shortcuts named
+      above, and each of them produces an output that looks exactly like a real finding.
+      Requiring a basis forces the producer to state which of declaration, resolution
+      or observation it actually performed, which is the difference between a contract
+      that genuinely depends on another and two contracts that appear in the same
+      repository.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+      - kind: model
+        id: dependencies/direct
+      - kind: model
+        id: dependencies/runtime
+    fixtures:
+      - contract-dependency/direct
+      - invalid/malformed-dependency
+      - invalid/broken-edge
+    examples:
+      - contract-with-dependencies
+    checks:
+      - A dependency without a basis is rejected.
+      - A dependency without an evidence array is rejected, and an empty array is rejected.
+      - A dependency with an unrecognised basis or class is rejected.
+      - A dependency edge whose endpoints use an unrecognised entity kind is rejected.
+      - A dependency edge with an empty evidence array is rejected.
+    nonGoals:
+      - This rule does not claim that a dependency is load-bearing at runtime, only that its basis is stated.
+
+  - id: dependency/edge-reference-integrity
+    title: Graph edges must resolve to nodes in the same graph
+    severity: MUST
+    statement: >
+      Every edge in a graph MUST have both of its endpoints resolve to a node
+      identifier declared in that graph. A producer MUST NOT emit an edge whose
+      endpoint is absent, and a consumer MUST NOT silently drop such an edge.
+    rationale: >
+      An edge that points at a node which does not exist is not a partial result, it is
+      a broken assertion: the reader cannot tell whether the node was pruned for
+      brevity, failed to resolve, or never existed. Failing loudly keeps a resolution
+      failure visible instead of turning it into a graph that appears smaller and
+      tidier than the analysis was.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/graph.schema.json
+    fixtures:
+      - contract-dependency/mixed
+      - invalid/broken-edge
+    examples:
+      - transitive-dependency-graph
+    checks:
+      - Every edge endpoint in the mixed fixture and the graph example resolves to a declared node.
+      - An edge whose endpoint kind is outside the entity enumeration is rejected.
+    nonGoals:
+      - This rule does not require a graph to be connected. An isolated node is reported, not removed.

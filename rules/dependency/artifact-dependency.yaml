@@ -1,0 +1,39 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: dependency
+file: artifact-dependency
+rules:
+  - id: dependency/artifact-dependency
+    title: An artifact dependency rests on a digest, and the boundary is not a failure
+    severity: MUST
+    statement: >
+      A dependency whose target is an artifact or executable MUST be established from a
+      digest match or from a build input declared by the subject, and MUST NOT be
+      established from artifact size, media type, module name, version string or any
+      other metadata similarity. A dependency of class EXTERNAL MUST record that its
+      target lies outside the observable boundary and MUST NOT be reported as VERIFIED.
+    rationale: >
+      Metadata similarities are exactly the signals that coincide by chance, and a
+      dependency asserted from them cannot be refuted by any later observation because
+      the model would have recorded no digest to re-compute. The boundary clause
+      addresses a different mistake with the same shape: an entity Amasario cannot
+      inspect is not an entity that failed inspection, and conflating the two would
+      report a correctly configured external integration as an unverifiable one.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+      - kind: model
+        id: dependencies/wasm
+      - kind: model
+        id: dependencies/external
+    fixtures:
+      - provenance/mismatched-wasm
+      - invalid/malformed-dependency
+    examples:
+      - transitive-dependency-graph
+    checks:
+      - A dependency without a basis is rejected, so no metadata-only dependency can be recorded.
+      - The mismatched fixture expresses its artifact relationship through digests that can be compared, rather than through metadata.
+      - An EXTERNAL dependency records a boundary reference rather than a digest it could not have obtained.
+    nonGoals:
+      - This rule does not claim an out-of-boundary target is unavailable or unsafe.
