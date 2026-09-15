@@ -1,0 +1,71 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/deployment
+name: Deployment Model
+modelKind: entity
+concept: DEPLOYMENT
+description: >
+  The record of an executable becoming a contract. This model exists because the
+  deployed artifact, the deployment event and the resulting contract are three
+  different things that are routinely conflated, and conflating them hides the
+  cases that matter: an upload that was never instantiated, an upgrade that left
+  the address unchanged, and a deployment whose transaction failed.
+schema:
+  id: https://amasario.dev/spec/v1/schema/deployment.schema.json
+  pointer: ''
+fields:
+  - name: contractId
+    type: string
+    requirement: always
+    description: The contract address this deployment concerns.
+  - name: network
+    type: object
+    requirement: always
+    description: The network the deployment was observed on.
+  - name: status
+    type: string
+    requirement: always
+    description: What is known about this deployment, constrained to deployment-statuses.
+  - name: transaction
+    type: object
+    requirement: optional
+    description: The transaction that carried the deployment.
+  - name: ledger
+    type: integer
+    requirement: optional
+    description: The ledger the deployment transaction was included in.
+  - name: operation
+    type: integer
+    requirement: optional
+    description: Zero-based index of the deploying operation within its transaction.
+  - name: wasmHash
+    type: object
+    requirement: optional
+    description: Hash of the executable deployed, kept alongside the contract's current hash so a deployment stays analysable after an upgrade.
+  - name: deploymentArtifact
+    type: object
+    requirement: optional
+    description: The artifact uploaded as part of this deployment, when the upload was observable.
+  - name: deployer
+    type: string
+    requirement: optional
+    description: The account that signed the deployment. An observation about who submitted the transaction, never a claim about ownership.
+  - name: upgradeOf
+    type: object
+    requirement: optional
+    description: The previous executable hash when this was an upgrade. Absent means the question was not answered.
+relations:
+  - kind: DEPLOYED_AS
+    description: A deployment is the object of DEPLOYED_AS from the executable deployed as it, or its subject relative to the resulting contract.
+  - kind: OBSERVED_IN
+    description: A deployment is observed in the transaction that carried it.
+taxonomies:
+  - deployment-statuses
+  - network-types
+invariants:
+  - status must be CONFIRMED only when the deployment is evidenced as successful and the resulting contract is reported by the network at the boundary. A transaction recorded as unsuccessful cannot support CONFIRMED.
+  - ledger must be present whenever transaction is present, because a transaction cannot be located again without knowing which ledger contains it.
+  - UNCONFIRMED must not be used to mean FAILED. An unknown outcome and a negative outcome are different states.
+nonGoals:
+  - This model does not judge whether a deployment was appropriate, authorised or desirable.
+  - This model does not assert that a contract is currently reachable merely because its deployment is confirmed.

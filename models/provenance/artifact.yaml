@@ -1,0 +1,71 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/artifact
+name: Artifact Model
+modelKind: entity
+concept: ARTIFACT
+description: >
+  A content-addressable object participating in provenance. The model is built
+  around one requirement: an artifact that is not addressed by a digest cannot have
+  identity, and every claim about it would therefore be unfalsifiable. Derivations
+  are modelled as a set of inputs rather than a chain, because a real build has
+  several inputs and collapsing them loses the information that verification needs.
+schema:
+  id: https://amasario.dev/spec/v1/schema/artifact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Unique identifier within the producing document.
+  - name: type
+    type: string
+    requirement: always
+    description: The artifact class, constrained to artifact-types.
+  - name: digest
+    type: object
+    requirement: always
+    description: The content digest. Required for every artifact type.
+  - name: sizeBytes
+    type: integer
+    requirement: optional
+    description: Artifact size, used as a cheap drift check against a digest.
+  - name: mediaType
+    type: string
+    requirement: optional
+    description: IANA media type. Informational, never used for matching.
+  - name: locator
+    type: string
+    requirement: optional
+    description: Where the artifact was retrieved from, so evidence can be revisited. Never treated as identity.
+  - name: parent
+    type: object
+    requirement: optional
+    description: The single artifact this was derived from, for one-to-one derivations.
+  - name: inputs
+    type: array
+    requirement: optional
+    description: Every input that contributed to this artifact, for many-to-one derivations.
+  - name: derived
+    type: array
+    requirement: optional
+    description: Artifacts directly produced from this one.
+  - name: reproducible
+    type: string
+    requirement: optional
+    description: Whether this artifact's digest reproduces from the same inputs and configuration.
+relations:
+  - kind: DERIVED_FROM
+    description: An artifact is the subject of DERIVED_FROM relative to its inputs.
+  - kind: VERIFIED_BY
+    description: An artifact is the object of VERIFIED_BY when it is what establishes another entity's provenance.
+taxonomies:
+  - artifact-types
+  - relationship-types
+invariants:
+  - A WASM artifact must be digested with sha256, the algorithm permitted for that type and the one the Stellar network uses to report a contract's executable hash.
+  - An artifact must appear in at most one parent relationship; several contributing inputs are expressed through inputs.
+  - An artifact's digest algorithm must be one permitted for its type.
+nonGoals:
+  - This model does not store, host or transfer artifact content. It addresses content; it does not hold it.
+  - This model does not assert that two artifacts with equal digests are the same file, only that they have equal content.

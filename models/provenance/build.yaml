@@ -1,0 +1,66 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/build
+name: Build Provenance Model
+modelKind: entity
+concept: BUILD
+description: >
+  How an artifact was produced from source. Build provenance is what turns an
+  unverifiable claim into a checkable one, but only when the inputs are recorded
+  precisely enough to be re-run. This model therefore requires exact toolchain
+  versions and rejects floating channels, and it distinguishes a build that was
+  shown not to reproduce from one where reproduction was never attempted.
+schema:
+  id: https://amasario.dev/spec/v1/schema/build.schema.json
+  pointer: ''
+fields:
+  - name: sourceRevision
+    type: string
+    requirement: always
+    description: The source revision this build consumed.
+  - name: toolchain
+    type: object
+    requirement: optional
+    description: Compiler and toolchain identity, with an exact version rather than a range.
+  - name: configuration
+    type: object
+    requirement: optional
+    description: Build configuration as resolvable values plus a digest over the whole, so two configurations are comparable without modelling every toolchain.
+  - name: lockfile
+    type: object
+    requirement: optional
+    description: The dependency lock information the build resolved against. A declared dependency set does not determine what was compiled; the lockfile does.
+  - name: target
+    type: string
+    requirement: optional
+    description: The artifact kind this build was expected to produce.
+  - name: artifact
+    type: object
+    requirement: optional
+    description: The artifact this build produced.
+  - name: artifactDigest
+    type: object
+    requirement: optional
+    description: Digest of the produced artifact, repeated at this level so a build stays comparable if its artifact record is lost.
+  - name: reproducibility
+    type: string
+    requirement: optional
+    description: What is known about whether this build reproduces.
+  - name: attestations
+    type: array
+    requirement: optional
+    description: Identifiers of attestations referring to this build. Referenced rather than embedded, because an attestation is evidence about a claim and not a property of the build.
+relations:
+  - kind: BUILT_FROM
+    description: A build is the subject of BUILT_FROM relative to the source revision it consumed.
+  - kind: VERIFIED_BY
+    description: A build is the object of VERIFIED_BY when it is what establishes an artifact's provenance.
+taxonomies:
+  - evidence-types
+invariants:
+  - A toolchain version must be exact. A version range or a floating release channel is not acceptable, because it cannot distinguish two builds that produced different output.
+  - configuration.digest must be present whenever configuration is present, so that two configurations can be compared without interpretation.
+  - reproducibility must not be set to NOT_REPRODUCED when the question was not attempted; NOT_ATTEMPTED exists for that case.
+nonGoals:
+  - This model does not execute builds. It records what a build declared and what it produced.
+  - This model does not assert that a build is trustworthy because it is reproducible. Reproducibility establishes that a digest corresponds to a source revision, nothing further.

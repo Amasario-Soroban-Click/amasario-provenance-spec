@@ -1,0 +1,62 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/source
+name: Source Provenance Model
+modelKind: entity
+concept: SOURCE
+description: >
+  Where the source of a deployed artifact is claimed to have come from. The model
+  separates what can be checked from what can only be read: a revision digest is a
+  fact that can be recomputed, whereas a repository URL and a branch name are
+  references that can change underneath it. Source provenance is the weakest link
+  in most real chains, so this model is explicit about which part is carrying the
+  weight.
+schema:
+  id: https://amasario.dev/spec/v1/schema/source.schema.json
+  pointer: ''
+fields:
+  - name: repositoryUrl
+    type: string
+    requirement: always
+    description: Canonical URL of the source repository.
+  - name: revision
+    type: string
+    requirement: always
+    description: The exact source revision. Only a hex digest revision can support a VERIFIED status.
+  - name: repositoryName
+    type: string
+    requirement: optional
+    description: Human-readable name, for reporting only. Never used for matching.
+  - name: ref
+    type: object
+    requirement: optional
+    description: The mutable reference the revision was resolved from, recorded so it is visible that the revision was reached through a mutable name.
+  - name: artifactDigest
+    type: object
+    requirement: optional
+    description: Digest of the source archive, which covers packaging as well as content and therefore establishes something different from the revision.
+  - name: timestamp
+    type: string
+    requirement: optional
+    description: Timestamp the source host reports for the revision. An observation about the host's record, not a proof of authorship timing.
+  - name: license
+    type: string
+    requirement: optional
+    description: Declared licence metadata. Amasario does not assess licence compatibility.
+  - name: buildRelationship
+    type: string
+    requirement: optional
+    description: How this source relates to the build that consumed it.
+relations:
+  - kind: BUILT_FROM
+    description: A source is the object of BUILT_FROM from the build or artifact produced from it.
+  - kind: VERIFIED_BY
+    description: A source revision can be the object of VERIFIED_BY when a reproducible build establishes it.
+taxonomies:
+  - evidence-types
+invariants:
+  - A revision reached through a branch or tag ref must not by itself support VERIFIED provenance, because the ref can be moved after the analysis.
+  - repositoryName must never be used to establish a relationship. Two repositories with the same name are not thereby related.
+nonGoals:
+  - This model does not read, fetch or archive source code. It records references and digests so that a consumer can do so if it chooses.
+  - This model does not claim that a revision is the only revision from which a deployed artifact could have been built.
