@@ -1,0 +1,70 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: artifact-types
+name: Artifact Types
+openness: open
+consumersMustHandleUnknown: true
+changeClass: additive
+description: >
+  The kinds of artifact Amasario can reason about. An artifact is any content-
+  addressable or revision-addressable object that participates in provenance: it
+  has an identity, it can be an input to or an output of a derivation, and it can
+  carry evidence.
+
+  Every artifact type declares whether a digest is required (`digestRequired`)
+  and the digest algorithms permitted for it. A type whose identity cannot be
+  established without a digest MUST NOT be represented by a revision string
+  alone, because a revision can be rewritten while a digest cannot.
+terms:
+  - id: SOURCE_ARCHIVE
+    label: source archive
+    description: >
+      A packaged snapshot of source code at a revision, such as a repository
+      tarball at a commit. Digest-stable only when the packaging is itself
+      reproducible, which is why the packaging method is recorded separately from
+      the type.
+    digestRequired: true
+    permittedAlgorithms: [sha256, sha512]
+    introducedIn: 1.0.0
+  - id: LOCKFILE
+    label: lockfile
+    description: >
+      A resolved dependency manifest, such as Cargo.lock. This artifact is what
+      converts declared dependencies into pinned ones, so it is the primary
+      evidence for package dependency resolution.
+    digestRequired: true
+    permittedAlgorithms: [sha256, sha512]
+    introducedIn: 1.0.0
+  - id: BUILD_ARTIFACT
+    label: build artifact
+    description: >
+      The output of a build step before deployment, such as a compiled
+      intermediate. May be produced by a build that is not reproducible, in which
+      case reproducibility information MUST record that rather than being omitted.
+    digestRequired: true
+    permittedAlgorithms: [sha256, sha512]
+    introducedIn: 1.0.0
+  - id: WASM
+    label: wasm
+    description: >
+      A WebAssembly module, either the executable deployed to a network or an
+      intermediate module. The identity of this artifact is its content hash,
+      which is what a network reports; the artifact is distinct from both the
+      contract address that hosts it and the source revision it was built from.
+    digestRequired: true
+    permittedAlgorithms: [sha256]
+    introducedIn: 1.0.0
+  - id: DEPLOYMENT_ARTIFACT
+    label: deployment artifact
+    description: >
+      The content actually submitted in a deployment, such as an uploaded WASM
+      payload identified by the transaction that carried it. This type exists
+      because the uploaded content and the resulting contract are two different
+      objects, and conflating them hides the case where an upload was never
+      instantiated as a contract.
+    digestRequired: true
+    permittedAlgorithms: [sha256, sha512]
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/artifact.schema.json
+    pointer: /properties/type

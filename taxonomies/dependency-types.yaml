@@ -1,0 +1,84 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependency-types
+name: Dependency Types
+openness: open
+consumersMustHandleUnknown: true
+changeClass: additive
+description: >
+  How a dependency relationship is classified. Classification answers *what kind
+  of thing* is depended upon and *how the requirement was established*, so the
+  type is a property of the evidence as much as of the entities involved.
+
+  Each term declares `requiredEvidence`: the evidence types that must be present
+  for a dependency of this class to be assertable at all. A dependency whose
+  evidence does not satisfy its class MUST NOT be emitted; it may be emitted at a
+  weaker class only if that class's evidence requirement is met. This is the
+  mechanism that prevents Amasario from implying a dependency merely because two
+  projects mention each other.
+terms:
+  - id: DIRECT
+    label: direct dependency
+    description: >
+      The subject depends on the object through a relationship observed in the
+      subject's own source, build configuration or deployment, with no
+      intermediate entity. A direct dependency need not be a contract.
+    requiredEvidence: [SOURCE, BUILD, ARTIFACT, DEPLOYMENT, TRANSACTION]
+    introducedIn: 1.0.0
+  - id: TRANSITIVE
+    label: transitive dependency
+    description: >
+      The subject reaches the object only through one or more intermediate
+      entities, and the path is recorded on the dependency so that the reasoning
+      can be reviewed. A transitive dependency MUST NOT be emitted without its
+      path; an unexplained transitive edge is indistinguishable from a guess.
+    requiredEvidence: [SOURCE, BUILD, ARTIFACT, DEPLOYMENT, TRANSACTION]
+    requiresPath: true
+    introducedIn: 1.0.0
+  - id: CONTRACT
+    label: contract dependency
+    description: >
+      The object is another Soroban contract. Established from an observed
+      cross-contract invocation, or from an interface or address that the
+      subject's source or storage demonstrably references. Interface similarity
+      alone is not sufficient evidence.
+    requiredEvidence: [TRANSACTION, EVENT, SOURCE, ARTIFACT]
+    introducedIn: 1.0.0
+  - id: PACKAGE
+    label: package dependency
+    description: >
+      The object is a software package or crate, established from a declared
+      dependency in a manifest together with lock information where available.
+      The declaration and the resolved version are distinct facts and MUST NOT be
+      conflated.
+    requiredEvidence: [SOURCE, BUILD, ARTIFACT]
+    introducedIn: 1.0.0
+  - id: WASM
+    label: wasm dependency
+    description: >
+      The object is a WASM artifact that the subject embeds, references or is
+      derived from. Established from a matching digest or an explicit build
+      input, never from size or metadata similarity.
+    requiredEvidence: [ARTIFACT, BUILD, DEPLOYMENT]
+    introducedIn: 1.0.0
+  - id: RUNTIME
+    label: runtime dependency
+    description: >
+      The dependency exists only while the subject executes, for example a
+      contract invoked during a transaction. Runtime dependencies are observable
+      but not statically knowable, so they MUST be flagged as observed rather
+      than inferred.
+    requiredEvidence: [TRANSACTION, EVENT]
+    introducedIn: 1.0.0
+  - id: EXTERNAL
+    label: external dependency
+    description: >
+      The object is outside the observable Amasario boundary: a system, service
+      or repository that Amasario can reference but cannot inspect or verify. The
+      boundary MUST be stated on the relationship so that a consumer does not
+      mistake a boundary for a verification failure.
+    requiredEvidence: [SOURCE, OBSERVATION]
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/dependency.schema.json
+    pointer: /properties/type

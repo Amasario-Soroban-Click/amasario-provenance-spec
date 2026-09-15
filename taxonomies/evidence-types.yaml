@@ -1,0 +1,93 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence-types
+name: Evidence Types
+openness: open
+consumersMustHandleUnknown: true
+changeClass: additive
+description: >
+  The kinds of evidence Amasario can attach to a claim. Evidence is the only
+  thing that makes a claim assertable, so every term declares where its records
+  must be traceable to (`traceableTo`): the entity or record a reviewer would
+  consult to independently confirm the evidence.
+
+  Evidence is a record about a claim, never a property of an artifact. In
+  particular an attestation is evidence about a claim made by an issuer, and must
+  not be modelled as a flag on the thing attested to.
+terms:
+  - id: SOURCE
+    label: source evidence
+    description: >
+      Evidence about a source repository, revision or source archive, such as a
+      recorded commit digest or a repository reference. Traceable to the
+      repository and the exact revision, not merely to the repository.
+    traceableTo: source repository at the recorded revision
+    introducedIn: 1.0.0
+  - id: BUILD
+    label: build evidence
+    description: >
+      Evidence about how an artifact was produced: toolchain identity,
+      configuration, target and lock information. Traceable to the build record
+      and the inputs it declares.
+    traceableTo: build record and its declared inputs
+    introducedIn: 1.0.0
+  - id: ARTIFACT
+    label: artifact evidence
+    description: >
+      Evidence about an artifact's existence and identity, such as a computed
+      digest. Traceable to the artifact bytes, since a digest is meaningless
+      without the content it was computed over.
+    traceableTo: artifact content addressed by the digest
+    introducedIn: 1.0.0
+  - id: WASM
+    label: wasm evidence
+    description: >
+      Evidence about a deployed WebAssembly module's identity, such as the hash a
+      network reports for a contract's executable. Traceable to the network
+      observation that reported it.
+    traceableTo: network observation at a recorded ledger boundary
+    introducedIn: 1.0.0
+  - id: DEPLOYMENT
+    label: deployment evidence
+    description: >
+      Evidence that an executable became a contract, such as the deployment
+      transaction and the ledger it was included in.
+    traceableTo: deployment transaction and ledger
+    introducedIn: 1.0.0
+  - id: TRANSACTION
+    label: transaction evidence
+    description: >
+      Evidence from a ledger transaction, such as its hash, inclusion ledger and
+      success or failure outcome. A transaction that failed MUST NOT be cited as
+      evidence that its intended effect occurred.
+    traceableTo: transaction hash on a named network
+    introducedIn: 1.0.0
+  - id: EVENT
+    label: event evidence
+    description: >
+      Evidence from a contract event emitted during execution. Events are the
+      primary observable for cross-contract invocation, so this type is central
+      to runtime dependency discovery.
+    traceableTo: emitting transaction and event index
+    introducedIn: 1.0.0
+  - id: ATTESTATION
+    label: attestation evidence
+    description: >
+      A signed or otherwise verifiable statement by an identified issuer about a
+      subject. An attestation supports the specific claim it states and nothing
+      broader; an attestation of a build MUST NOT be read as an attestation of
+      contract behaviour or of safety.
+    traceableTo: attestation issuer and the exact claim text
+    introducedIn: 1.0.0
+  - id: OBSERVATION
+    label: observation evidence
+    description: >
+      A record that something was observed at a point in time, without asserting
+      more than its presence. This is the weakest useful evidence and is what
+      allows an honest statement that a boundary was reached rather than that a
+      check failed.
+    traceableTo: observation record with its timestamp and boundary
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/evidence.schema.json
+    pointer: /properties/type
