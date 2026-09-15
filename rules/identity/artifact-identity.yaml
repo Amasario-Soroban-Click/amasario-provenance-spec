@@ -1,0 +1,35 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: identity
+file: artifact-identity
+rules:
+  - id: identity/artifact-identity
+    title: An artifact is identified by a digest, not by a name or a revision
+    severity: MUST
+    statement: >
+      Every artifact MUST carry a digest with an algorithm permitted for its declared
+      type. An artifact MUST NOT be identified by a locator, a file name, a version
+      string or a revision alone, and a WASM artifact MUST be digested with sha256.
+    rationale: >
+      A name and a location can both stay the same while the content behind them
+      changes, so an artifact identified by name would let two different contents be
+      treated as one, and the derivation that produced them to be recorded against the
+      wrong input. A digest is the only identity that makes the claims about an artifact
+      falsifiable.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/artifact.schema.json
+      - kind: model
+        id: provenance/artifact
+    fixtures:
+      - minimal/artifact
+      - provenance/mismatched-wasm
+    examples:
+      - build-provenance
+    checks:
+      - An artifact without a digest is rejected.
+      - An artifact type outside the artifact-types taxonomy is rejected.
+      - A digest algorithm outside the permitted set is rejected.
+      - An artifact carrying only a locator and no digest is rejected.
+    nonGoals:
+      - This rule does not assert that two artifacts with equal digests are the same file, only that they have equal content.

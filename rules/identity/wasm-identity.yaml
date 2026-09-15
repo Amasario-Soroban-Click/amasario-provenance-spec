@@ -1,0 +1,37 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: identity
+file: wasm-identity
+rules:
+  - id: identity/wasm-identity
+    title: Source identity and deployed executable identity are independent
+    severity: MUST
+    statement: >
+      A deployed executable identity MUST be established by the digest the network
+      reports for the contract, and MUST be recorded separately from any claimed source
+      repository, source revision, build artifact or build configuration. A document
+      MUST NOT record a source revision as though it were the identity of the deployed
+      executable, and MUST NOT infer a source revision from a matching repository name.
+    rationale: >
+      The claim that a deployed executable corresponds to a particular source revision
+      is the claim Amasario exists to let implementations check, and it is routinely
+      untrue: builds are not reproducible, revisions are rewritten, and a contract can
+      be upgraded. If the model stored source and executable as one identity, there
+      would be no representation in which that claim is false, so the specification
+      could not report a mismatch even when it observed one.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/wasm.schema.json
+      - kind: model
+        id: provenance/artifact
+    fixtures:
+      - provenance/verified-build
+      - provenance/mismatched-wasm
+    examples:
+      - verified-contract
+    checks:
+      - A WASM identity without a hash is rejected.
+      - A WASM identity digest using an algorithm other than sha256 is rejected.
+      - The mismatched fixture keeps the claimed source revision and the deployed executable hash as distinct values that disagree.
+    nonGoals:
+      - This rule does not require that a source linkage exist, only that its absence is represented as absence.

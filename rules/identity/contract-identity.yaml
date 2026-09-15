@@ -1,0 +1,37 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: identity
+file: contract-identity
+rules:
+  - id: identity/contract-identity
+    title: A contract address alone is not a contract identity
+    severity: MUST
+    statement: >
+      A contract identity MUST declare a contract address, the network it was observed
+      on and an identity version. A document MUST NOT treat an address as sufficient
+      to identify a contract, and a consumer MUST NOT merge two identities that differ
+      in network or in identity version into one entity.
+    rationale: >
+      An address is unique only within a network, so the same address on testnet and
+      mainnet denotes two unrelated contracts. Separately, an address can host
+      different executables over time as it is upgraded, so a dependency recorded
+      against an address without an identity version cannot be checked later. Both
+      failures produce the same outcome: a graph that looks correct and silently joins
+      or splits entities that were never the same thing.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/contract.schema.json
+      - kind: model
+        id: provenance/contract
+    fixtures:
+      - minimal/contract
+      - invalid/malformed-contract
+    examples:
+      - minimal-provenance
+    checks:
+      - A contract identity omitting contractId, network or identityVersion is rejected.
+      - A contract address that is not a 56-character strkey beginning with C is rejected.
+      - An identity whose executableType is STELLAR_ASSET and which carries a wasmHash is rejected.
+      - lastObservedLedger below firstObservedLedger is rejected as inconsistent.
+    nonGoals:
+      - This rule does not claim who owns or operates a contract.
