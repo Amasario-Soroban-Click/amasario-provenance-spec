@@ -1,0 +1,72 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: confidence-levels
+name: Confidence Levels
+openness: closed
+consumersMustHandleUnknown: false
+changeClass: normative
+description: >
+  Confidences describe how strongly the available evidence supports a claim.
+  They are an ordering, not a score: `ordinal` is the only comparison Amasario
+  defines, and it exists so that aggregation across a multi-hop path is
+  deterministic rather than dependent on implementation taste.
+
+  A confidence level is never a substitute for evidence. Every claim at any
+  level MUST reference the evidence that supports it; the level describes that
+  evidence, it does not replace it. VERIFIED is therefore a statement about
+  evidence completeness and consistency, never about trustworthiness or safety
+  (see SECURITY.md).
+terms:
+  - id: VERIFIED
+    label: verified
+    ordinal: 5
+    description: >
+      The claim is supported by complete evidence and the evidence is internally
+      consistent, reproducible and independently checkable from the referenced
+      records. If any evidence conflicts, the level MUST be lowered and the
+      verification status MUST be CONFLICTING rather than VERIFIED.
+    introducedIn: 1.0.0
+  - id: HIGH_CONFIDENCE
+    label: high confidence
+    ordinal: 4
+    description: >
+      The claim is supported by authoritative evidence that is complete for the
+      claim, but the evidence cannot be independently reproduced from the
+      Amasario record alone (for example an issuer-signed attestation that
+      Amasario can verify but not re-derive).
+    introducedIn: 1.0.0
+  - id: MEDIUM_CONFIDENCE
+    label: medium confidence
+    ordinal: 3
+    description: >
+      The claim is supported by evidence that is directionally correct but
+      incomplete, for example a source revision matched by branch name rather
+      than by exact commit digest.
+    introducedIn: 1.0.0
+  - id: LOW_CONFIDENCE
+    label: low confidence
+    ordinal: 2
+    description: >
+      The claim is supported only by indirect or circumstantial evidence, such
+      as an interface shape that is consistent with a claimed dependency but
+      does not establish it. LOW_CONFIDENCE findings MUST NOT be presented as
+      established relationships in a report's observed-facts section.
+    introducedIn: 1.0.0
+  - id: UNKNOWN
+    label: unknown
+    ordinal: 0
+    description: >
+      No evidence supporting the claim is available, or the evidence available
+      cannot be interpreted at this specification version. UNKNOWN means
+      "not established", which is distinct from "established as false".
+    introducedIn: 1.0.0
+aggregation:
+  strategy: minimum_ordinal
+  description: >
+    When combining confidences along a path or across a conjunction of claims,
+    the result is the term with the lowest ordinal among the inputs. A chain is
+    only as strong as its weakest link, and a rule that permits any other
+    combination would let an implementation manufacture confidence out of
+    unrelated strong evidence.
+  identityElement: VERIFIED
+  absorbers: [UNKNOWN]

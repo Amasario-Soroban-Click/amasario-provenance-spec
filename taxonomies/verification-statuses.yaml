@@ -1,0 +1,56 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: verification-statuses
+name: Verification Statuses
+openness: closed
+consumersMustHandleUnknown: false
+changeClass: normative
+description: >
+  The outcome of comparing a claim against the evidence available for it. This is
+  deliberately independent of confidence: confidence describes how much evidence
+  there is, verification describes what that evidence says about the claim.
+
+  The distinction exists so that contradictory evidence is representable. A
+  configuration where a claimed source revision cannot be matched to the deployed
+  WASM MUST be reported as CONFLICTING. If the model could not express that, the
+  only alternatives would be VERIFIED (wrong) or UNVERIFIED (lossy), and an
+  incorrect VERIFIED is the most damaging output Amasario could produce.
+terms:
+  - id: VERIFIED
+    label: verified
+    description: >
+      The claim is supported and the decisive evidence was checked against the
+      claim successfully. Requires at least one evidence record that is
+      deterministically comparable to the claim, such as a matching digest.
+      Claiming VERIFIED without such a record is a specification violation.
+    introducedIn: 1.0.0
+  - id: PARTIALLY_VERIFIED
+    label: partially verified
+    description: >
+      Some but not all of the claim's components were checked successfully, and
+      no component was contradicted. For example the source revision matched but
+      the build toolchain identity could not be established.
+    introducedIn: 1.0.0
+  - id: UNVERIFIED
+    label: unverified
+    description: >
+      The claim has not been checked, or the evidence required to check it is
+      unavailable. UNVERIFIED makes no statement about whether the claim is true.
+    introducedIn: 1.0.0
+  - id: CONFLICTING
+    label: conflicting
+    description: >
+      Evidence exists and contradicts the claim, or two pieces of otherwise
+      valid evidence contradict each other. This status takes precedence over
+      every other status: a claim with any contradicted component MUST be
+      reported as CONFLICTING, never as VERIFIED or PARTIALLY_VERIFIED.
+    precedence: 1
+    introducedIn: 1.0.0
+  - id: UNKNOWN
+    label: unknown
+    description: >
+      The claim could not be evaluated at all, typically because a required
+      field was absent or because a taxonomy term in an open vocabulary was not
+      recognised. Distinct from UNVERIFIED, which means the claim is understood
+      but unchecked.
+    introducedIn: 1.0.0
