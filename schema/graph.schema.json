@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/graph.schema.json",
+  "title": "Graph",
+  "description": "A typed, directed graph of Amasario entities and relationships, with its own completeness metadata. The graph is directed by definition because relationship semantics are directional; an undirected view is a consumer-side projection and must not be serialised as if it were the model. Nodes are typed by the shared entity kinds and edges carry the full relationship record, so a consumer reconstructing provenance from a graph never has to consult a second document.",
+  "type": "object",
+  "required": ["apiVersion", "specVersion", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/apiVersion"
+    },
+    "specVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/specVersion"
+    },
+    "id": {
+      "description": "Identifier for this graph within the producing document.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "nodes": {
+      "description": "The graph's nodes. May be empty for a graph whose analysis found nothing, which is a legitimate result and distinct from a failed analysis.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "description": "The graph's edges.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "boundary": {
+      "description": "The observation boundary the graph was assembled at.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "metadata": {
+      "description": "Structural facts about this graph, recorded by the producer so that a consumer does not have to recompute them and cannot silently disagree about them.",
+      "type": "object",
+      "required": ["directed", "cyclic"],
+      "additionalProperties": false,
+      "properties": {
+        "directed": {
+          "description": "Whether the graph's edges are directed. Must be true: Amasario relationship semantics are directional, so a graph that reports false is not an Amasario graph.",
+          "const": true
+        },
+        "cyclic": {
+          "description": "Whether the graph contains at least one cycle. Cycles are permitted and reported rather than removed, because removing them would hide real topology.",
+          "type": "boolean"
+        },
+        "nodeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "edgeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxDepth": {
+          "description": "The traversal depth the graph was bounded by, when it was bounded.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "truncated": {
+          "description": "Whether traversal stopped before exhausting the reachable graph.",
+          "type": "boolean"
+        },
+        "disconnectedNodes": {
+          "description": "Identifiers of nodes with no edges. Reported explicitly because a node that was discovered but could not be related is a finding in itself, and dropping it would make the graph look tidier than the analysis was.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "description": "A typed entity in the graph.",
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "The node identifier, which must match the identifier used when the entity is referenced from an edge in this graph.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "kind": {
+          "description": "The entity kind. References the shared enumeration in provenance.schema.json, so node kinds and entity references can never disagree about the vocabulary.",
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityKind"
+        },
+        "label": {
+          "description": "A human-readable label for reporting. Never used for matching.",
+          "type": "string",
+          "maxLength": 512
+        },
+        "digest": {
+          "description": "The content digest of the node's entity, where one exists.",
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+        },
+        "attributes": {
+          "description": "A closed set of optional structural facts about the node. Deliberately closed rather than an open bag: a fact that matters must be modelled, and a fact that is not modelled must not be smuggled in as a string.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "contractId": {
+              "type": "string",
+              "pattern": "^C[A-Z2-7]{55}$"
+            },
+            "networkId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "revision": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "external": {
+              "description": "Whether the node lies outside the observable Amasario boundary. Marked explicitly so that an uninspectable entity is never mistaken for an unverified one.",
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "edge": {
+      "description": "A typed relationship in the graph, carrying the same fields as a dependency edge so that graph and dependency views cannot diverge.",
+      "type": "object",
+      "required": ["id", "source", "target", "relationship", "evidence", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "source": {
+          "description": "The identifier of the source node. Must resolve to a node in this graph, which is enforced by rule dependency/direct-dependency and by the cross-reference integrity tests.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "target": {
+          "description": "The identifier of the target node. Must resolve to a node in this graph.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "relationship": {
+          "description": "The typed relationship, constrained to relationship-types.",
+          "enum": [
+            "DEPENDS_ON",
+            "INVOCATES",
+            "BUILT_FROM",
+            "DERIVED_FROM",
+            "DEPLOYED_AS",
+            "OBSERVED_IN",
+            "VERIFIED_BY",
+            "AFFECTS"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+          }
+        },
+        "confidence": {
+          "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+        },
+        "boundary": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+        },
+        "observed": {
+          "description": "Whether the edge was directly observed rather than inferred.",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

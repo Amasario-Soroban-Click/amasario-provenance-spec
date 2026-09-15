@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/snapshot.schema.json",
+  "title": "Snapshot",
+  "description": "A normalised, reproducible record of everything Amasario knew about a contract at one observation boundary. A snapshot is the unit of comparison: two snapshots taken at different boundaries can be diffed, and their differences are the changes that actually occurred rather than differences caused by how the analysis was run. Everything volatile is therefore excluded from the snapshot's own digest, and the boundary is recorded so that 'different' and 'later' cannot be confused.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "specVersion",
+    "id",
+    "capturedAt",
+    "boundary",
+    "network",
+    "ledgerBoundary",
+    "contract",
+    "evidence",
+    "confidence",
+    "contentDigest"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/apiVersion"
+    },
+    "specVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/specVersion"
+    },
+    "id": {
+      "description": "The snapshot identifier. Stable given the same contract and boundary, so that re-capturing the same state yields the same identifier rather than a new one.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "capturedAt": {
+      "description": "When the snapshot was captured. Excluded from contentDigest because two captures of the same state at different times must compare equal.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "boundary": {
+      "description": "The observation boundary. Part of the digest, because the same query at a different boundary is a different analysis.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "network": {
+      "description": "The network, surfaced at the top level so that a snapshot is self-describing without walking into the boundary. Rule compatibility/snapshot-consistency requires this to equal boundary.network.",
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "ledgerBoundary": {
+      "description": "The ledger boundary, surfaced at the top level. Rule compatibility/snapshot-consistency requires this to equal boundary.ledger.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "contract": {
+      "description": "The contract identity this snapshot is about.",
+      "$ref": "https://amasario.dev/spec/v1/schema/contract.schema.json"
+    },
+    "wasm": {
+      "description": "The deployed executable identity, when established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/wasm.schema.json"
+    },
+    "provenance": {
+      "description": "The full provenance record, including source and build, when established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json"
+    },
+    "dependencies": {
+      "description": "The dependency set, including its truncation disclosure.",
+      "$ref": "https://amasario.dev/spec/v1/schema/dependency-set.schema.json"
+    },
+    "graph": {
+      "description": "The dependency graph, when the analysis materialised one.",
+      "$ref": "https://amasario.dev/spec/v1/schema/graph.schema.json"
+    },
+    "evidence": {
+      "description": "Every evidence record in this snapshot. Required and non-empty: a snapshot with no evidence can support no claim, so an empty set would be a document that looks authoritative and is not.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/evidence.schema.json"
+      }
+    },
+    "confidence": {
+      "description": "The overall confidence in this snapshot's contents.",
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    },
+    "impact": {
+      "description": "Impact findings computed at this boundary.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/impact.schema.json"
+      }
+    },
+    "attestations": {
+      "description": "Attestations referenced by this snapshot.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/attestation.schema.json"
+      }
+    },
+    "engineVersion": {
+      "description": "The version of the engine that produced this snapshot, when it was produced by an implementation. Recorded because two snapshots produced by different engine versions may legitimately differ, and a diff needs to be able to say so instead of reporting an engine change as a contract change.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/semver"
+    },
+    "contentDigest": {
+      "description": "The digest of the snapshot's canonical serialisation with volatile fields excluded. This is the field a diff compares to decide quickly whether anything changed at all.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "volatileFields": {
+      "description": "The field paths excluded from contentDigest. Declared rather than fixed in prose so that a consumer can recompute the digest itself and get the same answer; rule compatibility/diff-consistency requires that any field listed here is genuinely volatile.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^/",
+        "maxLength": 512
+      }
+    },
+    "truncated": {
+      "description": "Whether any part of the snapshot was bounded before exhaustion. When true, the snapshot does not claim completeness.",
+      "type": "boolean"
+    }
+  }
+}

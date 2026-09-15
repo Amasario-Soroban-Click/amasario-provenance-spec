@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/diff.schema.json",
+  "title": "Snapshot Diff",
+  "description": "The machine-readable differences between two snapshots, grouped by what changed rather than by where. A diff is only useful if it is deterministic: the same pair of snapshots must always produce the same diff, so comparison is defined over canonical serialisation and the schema records the comparison mode explicitly rather than assuming it. Differences caused purely by ordering or by volatile fields must not appear at all.",
+  "type": "object",
+  "required": ["apiVersion", "specVersion", "before", "after", "changes", "comparisonMode"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/apiVersion"
+    },
+    "specVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/specVersion"
+    },
+    "before": {
+      "description": "The earlier snapshot, identified by id and digest rather than embedded, so that a diff cannot be read without the snapshots it compares being available.",
+      "$ref": "#/$defs/snapshotRef"
+    },
+    "after": {
+      "description": "The later snapshot.",
+      "$ref": "#/$defs/snapshotRef"
+    },
+    "comparisonMode": {
+      "description": "How the snapshots were compared. CANONICAL normalises ordering of every set before comparing and is the only mode whose result is deterministic; the other values are recorded so that an implementation that compared differently must say so rather than producing a diff that looks canonical.",
+      "enum": ["CANONICAL", "ORDER_SENSITIVE", "ORDER_INSENSITIVE_ONLY"]
+    },
+    "comparable": {
+      "description": "Whether the two snapshots were comparable at all. Two snapshots from different apiVersion families, or with a conflicting boundary ordering, are not. When false, changes must be empty and the reason must be stated, because an empty diff is otherwise indistinguishable from 'nothing changed'.",
+      "type": "boolean"
+    },
+    "incomparableReason": {
+      "description": "Why the snapshots were not comparable. Required when comparable is false, enforced by rule compatibility/diff-consistency.",
+      "enum": [
+        "API_VERSION_MISMATCH",
+        "SPEC_VERSION_INCOMPATIBLE",
+        "NETWORK_MISMATCH",
+        "BOUNDARY_ORDER_INVALID",
+        "MALFORMED_SNAPSHOT"
+      ]
+    },
+    "changes": {
+      "description": "Every difference detected, one entry per difference. Each entry classifies both what changed and how, so that a consumer can filter on either axis.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "changeType", "entity"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The change identifier, deterministic given the same inputs so that a diff can itself be diffed.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "category": {
+            "description": "What kind of thing changed. Constrained so that a consumer can subscribe to categories without parsing free text.",
+            "enum": [
+              "RELATIONSHIP_ADDED",
+              "RELATIONSHIP_REMOVED",
+              "RELATIONSHIP_CHANGED",
+              "PROVENANCE_CHANGED",
+              "WASM_IDENTITY_CHANGED",
+              "DEPLOYMENT_CHANGED",
+              "EVIDENCE_CHANGED",
+              "CONFIDENCE_CHANGED",
+              "IMPACT_SURFACE_CHANGED",
+              "CONTRACT_IDENTITY_CHANGED",
+              "TRUNCATION_CHANGED"
+            ]
+          },
+          "changeType": {
+            "description": "How it changed. Constrained to change-types; MODIFIED is used whenever no meaningful ordering exists, because Amasario does not guess whether a change is an upgrade or a downgrade.",
+            "enum": ["ADDED", "REMOVED", "MODIFIED", "UPGRADED", "DOWNGRADED", "REPLACED"]
+          },
+          "entity": {
+            "description": "The entity the difference concerns.",
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+          },
+          "beforeValue": {
+            "description": "The value in the earlier snapshot. Absent for ADDED.",
+            "type": ["string", "number", "boolean", "null"]
+          },
+          "afterValue": {
+            "description": "The value in the later snapshot. Absent for REMOVED.",
+            "type": ["string", "number", "boolean", "null"]
+          },
+          "path": {
+            "description": "A JSON pointer into the snapshot at which the difference was found, when the difference is a field change rather than an added or removed entity.",
+            "type": "string",
+            "pattern": "^/",
+            "maxLength": 512
+          },
+          "reason": {
+            "description": "Why this is a difference rather than a serialisation artefact. Required so that a reviewer can reject a diff entry that turns out to be noise.",
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2048
+          },
+          "evidence": {
+            "description": "Evidence supporting this difference, where the difference is itself a claim about the world rather than only about the documents.",
+            "type": "array",
+            "items": {
+              "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+            }
+          },
+          "impactRelevant": {
+            "description": "Whether this change should trigger impact re-analysis. Recorded by the producer so that every consumer does not have to redefine which categories matter.",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "summary": {
+      "description": "Counts by category and change type, with the total. Recorded so that the summary cannot disagree with the changes array, and rule compatibility/diff-consistency requires them to agree.",
+      "type": "object",
+      "required": ["total"],
+      "additionalProperties": false,
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "byCategory": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "byChangeType": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "generatedAt": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    }
+  },
+  "$defs": {
+    "snapshotRef": {
+      "description": "A reference to one of the snapshots being compared.",
+      "type": "object",
+      "required": ["id", "contentDigest"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "contentDigest": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+        },
+        "ledgerBoundary": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+        },
+        "specVersion": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/specVersion"
+        },
+        "engineVersion": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/semver"
+        }
+      }
+    }
+  }
+}
