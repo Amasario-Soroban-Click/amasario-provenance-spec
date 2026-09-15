@@ -49,8 +49,21 @@ export default tseslint.config(
     },
   },
   {
-    // Pure JavaScript/MJS config files are not part of the typed program.
+    // Pure JavaScript/MJS files are not part of the typed program, so the
+    // type-aware rules that require type information are disabled. The two
+    // remaining relaxations are inherent to untyped scripts: without a type
+    // checker there are no return types to check, and Node globals are not
+    // declared by any `@types` package these files import.
     files: ['**/*.mjs', '**/*.js'],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
   },
 );
