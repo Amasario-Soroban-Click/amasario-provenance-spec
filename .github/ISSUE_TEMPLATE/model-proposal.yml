@@ -1,0 +1,117 @@
+name: Model proposal
+description: Propose a new taxonomy term, schema, model, or rule, or a change to an existing one.
+title: '[model] '
+labels: ['model-proposal']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for any change to normative content: `schema/`, `models/`,
+        `taxonomies/`, `rules/`, `fixtures/`, `vectors/`, `examples/`.
+
+        These changes alter what the specification means, so they are reviewed as
+        changes to a shared model rather than as edits. Please read
+        `GOVERNANCE.md` and `VERSIONING.md` first: a proposal that cannot be
+        classified as breaking, additive or editorial cannot be released.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change is this?
+      options:
+        - New taxonomy term
+        - New or changed schema
+        - New or changed model
+        - New or changed rule
+        - New fixture, vector or example
+        - Change to existing normative content
+    validations:
+      required: true
+
+  - type: textarea
+    id: unrepresentable
+    attributes:
+      label: What could not be represented before?
+      description: >-
+        State the fact that the specification currently cannot express, or can
+        express only misleadingly. If something went wrong as a result, describe
+        that. This is the strongest part of a proposal.
+      placeholder: |
+        A dependency observed through a relayer cannot be recorded with its
+        observation boundary, so it currently has to be emitted without one and
+        loses its `firstObserved`/`lastObserved` pair.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: >-
+        The concrete change: the term, the fields, the rule statement. If you are
+        proposing a new term, say whether its taxonomy is open or closed and why.
+    validations:
+      required: true
+
+  - type: textarea
+    id: checkable
+    attributes:
+      label: How is it checkable?
+      description: >-
+        Name the schema that will constrain it, the validator that will catch a
+        malformed instance, and the fixture or vector that will exercise it. A
+        normative artefact without all three is rejected because nothing would
+        catch it becoming wrong later.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: change-class
+    attributes:
+      label: Versioning classification
+      description: See `VERSIONING.md` for the rules behind each option.
+      options:
+        - Additive (MINOR) — new optional property, new term in an open taxonomy, relaxed rule
+        - Breaking (MAJOR) — required property change, narrowed enumeration, stricter rule, digest change
+        - Editorial (PATCH) — no effect on validation outcomes or digests
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: >-
+        What existing valid documents would stop validating, and what an existing
+        consumer would do if it encountered the new content without understanding
+        it? "None" is a valid answer if it is true.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: >-
+        What existing construct could carry this fact, and why is it insufficient?
+        Every added term is a term every consumer must handle, so this is weighed
+        carefully.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: >-
+            This proposal does not require a security judgement. No term I am
+            proposing means "secure", "safe", "malicious" or "vulnerable".
+          required: true
+        - label: >-
+            This proposal does not add execution logic or network access to the
+            specification.
+          required: true
+        - label: I am willing to supply the fixture, vector or example that exercises this change.
+          required: false

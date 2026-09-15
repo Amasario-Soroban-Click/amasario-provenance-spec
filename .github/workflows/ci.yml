@@ -1,0 +1,52 @@
+name: CI
+
+# The full gate. Every other workflow is a focused subset of this one, so a
+# contributor running `npm run ci` locally sees exactly what this job sees.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: format · lint · typecheck · validate · docs · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Linting
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Validate taxonomies, schemas, models, rules, fixtures and vectors
+        run: npm run validate
+
+      - name: Documentation check
+        run: npm run docs:check
+
+      - name: Tests
+        run: npm run test
+
+      - name: Release validation
+        run: npm run release:check

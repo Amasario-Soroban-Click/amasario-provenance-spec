@@ -1,0 +1,53 @@
+name: Model validation
+
+# Focused gate for the conceptual layer. Models explain what fields mean, so a
+# model that describes a field the schema does not define is documentation that
+# lies about the wire format.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'models/**'
+      - 'rules/**'
+      - 'schema/**'
+      - 'scripts/validate-models.ts'
+      - 'scripts/validate-rules.ts'
+      - '.github/workflows/model-validation.yml'
+  pull_request:
+    paths:
+      - 'models/**'
+      - 'rules/**'
+      - 'schema/**'
+      - 'scripts/validate-models.ts'
+      - 'scripts/validate-rules.ts'
+      - '.github/workflows/model-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  model:
+    name: Models match schemas and rules resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check models against the schemas they map onto
+        run: npm run validate:models
+
+      # Both directions matter: a rule must be well-formed, and every rule id
+      # referenced from a schema must resolve to a file.
+      - name: Check rules and their schema references
+        run: npm run validate:rules

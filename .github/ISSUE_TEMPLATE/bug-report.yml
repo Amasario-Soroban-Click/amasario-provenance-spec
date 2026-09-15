@@ -1,0 +1,100 @@
+name: Bug report
+description: Report an incorrect schema, rule, model, fixture, vector, example, or validator.
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A specification bug is a claim in this repository that is wrong, or
+        machinery that does not do what it says. Both matter equally: a schema
+        that accepts a document it should reject is exactly as damaging as a
+        validator that passes when it should fail.
+
+        **Do not report security vulnerabilities here.** Use GitHub's private
+        vulnerability reporting as described in `SECURITY.md`.
+
+  - type: input
+    id: version
+    attributes:
+      label: Specification version
+      description: The `specVersion` of the affected artefact, or the `version` in `package.json`.
+      placeholder: '1.0.0'
+    validations:
+      required: true
+
+  - type: textarea
+    id: artefact
+    attributes:
+      label: Affected artefact
+      description: The exact path, and the pointer or rule id if the problem is local to one part.
+      placeholder: |
+        schema/dependency-edge.schema.json — /properties/basis
+        rules/dependency/direct-dependency
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the specification says should happen
+      description: Quote the relevant statement, rule, or schema keyword.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happens
+      description: >-
+        For a validation problem, the observed error, including the keyword and
+        instance path where available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: >-
+        A fixture, vector or document — pasted inline or attached — that
+        demonstrates the problem. A reproduction using synthetic data is
+        preferred: do not paste secrets, private keys or private source.
+      render: yaml
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Invalid content is accepted (validation hole)
+        - Valid content is rejected (over-strict constraint)
+        - A description contradicts the artefact it describes
+        - A validator or script does not do what it documents
+        - A digest or serialisation is not reproducible
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands run
+      description: The exact commands, so the result can be reproduced.
+      placeholder: |
+        npm ci
+        npm run validate:fixtures
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: My reproduction contains no credentials, private keys, seeds or private source code.
+          required: true
+        - label: I have not included any claim that a contract is secure, malicious, safe or vulnerable.
+          required: true

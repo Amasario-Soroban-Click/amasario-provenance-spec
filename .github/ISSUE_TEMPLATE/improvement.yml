@@ -1,0 +1,63 @@
+name: Improvement
+description: Suggest an improvement to the tooling, documentation, or CI.
+title: '[improvement] '
+labels: ['improvement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for changes that do not alter the meaning of the
+        specification: tooling, documentation, fixtures that need widening,
+        validators, CI. If your change alters what the specification *means* —
+        a term, a field, a rule — use the **Model proposal** form instead.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Validation tooling (`scripts/`)
+        - Test suite (`tests/`)
+        - Documentation
+        - CI workflows
+        - Fixtures, examples or vectors
+        - Contributor experience
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is awkward today?
+      description: Describe the friction concretely — the command you ran and what it did not tell you.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: What would the better experience look like? A concrete command or output example helps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: Could this change hide a failure?
+      description: >-
+        Tooling changes are the place where a real check quietly becomes a no-op.
+        If your proposal changes what a validator reports, say what it would no
+        longer catch.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: This change does not alter the meaning of any schema, model, taxonomy or rule.
+          required: true
+        - label: I have checked that `npm run ci` currently passes, if I ran it locally.
+          required: false

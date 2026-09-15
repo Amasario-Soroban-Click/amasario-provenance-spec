@@ -1,0 +1,44 @@
+name: Documentation
+
+# The generated reference pages are derived from the artefacts, not written by
+# hand, so a documentation failure here means the published inventory and the
+# repository have diverged. That is treated as a build failure rather than a
+# warning, because a reference page that describes something which does not
+# exist is worse than no reference page.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Generated reference is current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # --check fails if a generated page is missing, out of date, or has no
+      # producer. It never writes, so a passing run proves the commit already
+      # contains the correct output.
+      - name: Check generated documentation
+        run: npm run docs:check
+
+      # Keeps the hand-written chapters honest about what exists: a linked file
+      # that is not in the repository is a documentation defect.
+      - name: Check documentation links resolve
+        run: node scripts/../.github/scripts/check-doc-links.mjs

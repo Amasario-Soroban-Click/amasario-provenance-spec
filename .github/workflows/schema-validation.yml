@@ -1,0 +1,54 @@
+name: Schema validation
+
+# Focused gate for the wire format. A schema change is the change most likely to
+# break a consumer silently, so this workflow reports exactly which schema
+# drifted and why, independently of the rest of the pipeline.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'schema/**'
+      - 'taxonomies/**'
+      - 'scripts/validate-schema.ts'
+      - 'scripts/validate-taxonomies.ts'
+      - '.github/workflows/schema-validation.yml'
+  pull_request:
+    paths:
+      - 'schema/**'
+      - 'taxonomies/**'
+      - 'scripts/validate-schema.ts'
+      - 'scripts/validate-taxonomies.ts'
+      - '.github/workflows/schema-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schema-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  schema:
+    name: Schemas compile and taxonomies agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Ajv is configured strict, so a schema that compiles here rejects
+      # malformed input the way the specification claims it does.
+      - name: Compile every schema under a strict Ajv instance
+        run: npm run validate:schemas
+
+      # Every enumeration in a schema must match the taxonomy that owns it, in
+      # both directions, so a term cannot be added to one and forgotten in the
+      # other.
+      - name: Cross-check schema enumerations against taxonomies
+        run: npm run validate:taxonomies

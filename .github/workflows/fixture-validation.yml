@@ -1,0 +1,59 @@
+name: Fixture and vector validation
+
+# Focused gate for the instance layer. This is the workflow that proves the
+# schemas reject what they claim to reject: an invalid fixture must fail on the
+# exact keyword and instance path it declares, not merely fail.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fixtures/**'
+      - 'examples/**'
+      - 'vectors/**'
+      - 'schema/**'
+      - 'scripts/validate-fixtures.ts'
+      - 'scripts/validate-vectors.ts'
+      - '.github/workflows/fixture-validation.yml'
+  pull_request:
+    paths:
+      - 'fixtures/**'
+      - 'examples/**'
+      - 'vectors/**'
+      - 'schema/**'
+      - 'scripts/validate-fixtures.ts'
+      - 'scripts/validate-vectors.ts'
+      - '.github/workflows/fixture-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fixture:
+    name: Fixtures, examples and vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Validates every fixture and example, requires each invalid fixture to
+      # fail on its declared keyword and path, and checks that every evidence
+      # and attestation reference resolves.
+      - name: Validate fixtures and examples
+        run: npm run validate:fixtures
+
+      # Recomputes each vector's canonical serialisation and digest, then
+      # re-serialises to confirm the bytes are stable. A digest that does not
+      # reproduce is not usable as an identity, so this is a hard failure.
+      - name: Validate vectors
+        run: npm run validate:vectors

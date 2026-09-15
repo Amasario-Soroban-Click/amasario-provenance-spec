@@ -1,0 +1,54 @@
+version: 2
+updates:
+  # The validation toolchain. Ajv's supported JSON Schema draft and the
+  # TypeScript version supported by typescript-eslint both constrain this
+  # group, so upgrades are grouped and reviewed together rather than merged
+  # one dependency at a time.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    commit-message:
+      prefix: 'build'
+      include: scope
+    groups:
+      validation-toolchain:
+        patterns:
+          - 'ajv*'
+          - 'yaml'
+      lint-and-format:
+        patterns:
+          - 'eslint'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - 'prettier'
+          - 'typescript'
+      test-runner:
+        patterns:
+          - 'vitest'
+          - '@types/*'
+          - 'tsx'
+
+  # Workflow actions. These run with `permissions: contents: read` and no
+  # secrets, so the blast radius of an action compromise is limited to the
+  # build, but keeping them current is still cheaper than auditing stale ones.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'ci'
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - 'actions/*'

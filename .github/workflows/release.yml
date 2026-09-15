@@ -1,0 +1,62 @@
+name: Release
+
+# Runs the full validation suite and then the release check, which verifies that
+# package.json#version, VERSIONING.md and CHANGELOG.md agree and that nothing
+# that must never be committed is present. The release check is deliberately
+# separate from CI so that a tag can be validated on its own.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Validate the tagged commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Linting
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Validate the specification
+        run: npm run validate
+
+      - name: Documentation check
+        run: npm run docs:check
+
+      - name: Tests
+        run: npm run test
+
+      # Structure, version agreement, changelog coverage and secret scanning.
+      - name: Release validation
+        run: npm run release:check
+
+      - name: Assert the tag matches the specification version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match package.json version v${version}" >&2
+            exit 1
+          fi
