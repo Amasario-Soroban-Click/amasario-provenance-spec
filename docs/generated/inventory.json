@@ -1,0 +1,484 @@
+{
+  "apiVersion": "amasario.dev/v1",
+  "specVersion": "1.0.0",
+  "schemas": [
+    "https://amasario.dev/spec/v1/schema/artifact.schema.json",
+    "https://amasario.dev/spec/v1/schema/attestation.schema.json",
+    "https://amasario.dev/spec/v1/schema/build.schema.json",
+    "https://amasario.dev/spec/v1/schema/confidence.schema.json",
+    "https://amasario.dev/spec/v1/schema/contract.schema.json",
+    "https://amasario.dev/spec/v1/schema/dependency-edge.schema.json",
+    "https://amasario.dev/spec/v1/schema/dependency-set.schema.json",
+    "https://amasario.dev/spec/v1/schema/dependency.schema.json",
+    "https://amasario.dev/spec/v1/schema/deployment.schema.json",
+    "https://amasario.dev/spec/v1/schema/diff.schema.json",
+    "https://amasario.dev/spec/v1/schema/error.schema.json",
+    "https://amasario.dev/spec/v1/schema/event.schema.json",
+    "https://amasario.dev/spec/v1/schema/evidence.schema.json",
+    "https://amasario.dev/spec/v1/schema/graph.schema.json",
+    "https://amasario.dev/spec/v1/schema/impact-path.schema.json",
+    "https://amasario.dev/spec/v1/schema/impact.schema.json",
+    "https://amasario.dev/spec/v1/schema/invocation.schema.json",
+    "https://amasario.dev/spec/v1/schema/network.schema.json",
+    "https://amasario.dev/spec/v1/schema/provenance.schema.json",
+    "https://amasario.dev/spec/v1/schema/report.schema.json",
+    "https://amasario.dev/spec/v1/schema/snapshot.schema.json",
+    "https://amasario.dev/spec/v1/schema/source.schema.json",
+    "https://amasario.dev/spec/v1/schema/transaction.schema.json",
+    "https://amasario.dev/spec/v1/schema/wasm.schema.json"
+  ],
+  "taxonomies": [
+    {
+      "id": "artifact-types",
+      "openness": "open",
+      "terms": [
+        "SOURCE_ARCHIVE",
+        "LOCKFILE",
+        "BUILD_ARTIFACT",
+        "WASM",
+        "DEPLOYMENT_ARTIFACT"
+      ]
+    },
+    {
+      "id": "change-types",
+      "openness": "closed",
+      "terms": [
+        "ADDED",
+        "REMOVED",
+        "MODIFIED",
+        "UPGRADED",
+        "DOWNGRADED",
+        "REPLACED"
+      ]
+    },
+    {
+      "id": "confidence-levels",
+      "openness": "closed",
+      "terms": [
+        "VERIFIED",
+        "HIGH_CONFIDENCE",
+        "MEDIUM_CONFIDENCE",
+        "LOW_CONFIDENCE",
+        "UNKNOWN"
+      ]
+    },
+    {
+      "id": "dependency-types",
+      "openness": "open",
+      "terms": [
+        "DIRECT",
+        "TRANSITIVE",
+        "CONTRACT",
+        "PACKAGE",
+        "WASM",
+        "RUNTIME",
+        "EXTERNAL"
+      ]
+    },
+    {
+      "id": "deployment-statuses",
+      "openness": "open",
+      "terms": [
+        "OBSERVED",
+        "CONFIRMED",
+        "UNCONFIRMED",
+        "FAILED",
+        "UNKNOWN"
+      ]
+    },
+    {
+      "id": "evidence-types",
+      "openness": "open",
+      "terms": [
+        "SOURCE",
+        "BUILD",
+        "ARTIFACT",
+        "WASM",
+        "DEPLOYMENT",
+        "TRANSACTION",
+        "EVENT",
+        "ATTESTATION",
+        "OBSERVATION"
+      ]
+    },
+    {
+      "id": "impact-types",
+      "openness": "closed",
+      "terms": [
+        "DIRECT",
+        "TRANSITIVE",
+        "MULTI_HOP",
+        "ARTIFACT",
+        "CONTRACT",
+        "DEPLOYMENT",
+        "CHANGE"
+      ]
+    },
+    {
+      "id": "network-types",
+      "openness": "open",
+      "terms": [
+        "LOCAL",
+        "FUTURENET",
+        "TESTNET",
+        "MAINNET",
+        "CUSTOM"
+      ]
+    },
+    {
+      "id": "relationship-types",
+      "openness": "closed",
+      "terms": [
+        "DEPENDS_ON",
+        "INVOCATES",
+        "BUILT_FROM",
+        "DERIVED_FROM",
+        "DEPLOYED_AS",
+        "OBSERVED_IN",
+        "VERIFIED_BY",
+        "AFFECTS"
+      ]
+    },
+    {
+      "id": "verification-statuses",
+      "openness": "closed",
+      "terms": [
+        "VERIFIED",
+        "PARTIALLY_VERIFIED",
+        "UNVERIFIED",
+        "CONFLICTING",
+        "UNKNOWN"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "dependencies/contract",
+      "concept": "DEPENDENCY_CONTRACT"
+    },
+    {
+      "id": "dependencies/direct",
+      "concept": "DEPENDENCY_DIRECT"
+    },
+    {
+      "id": "dependencies/external",
+      "concept": "DEPENDENCY_EXTERNAL"
+    },
+    {
+      "id": "dependencies/package",
+      "concept": "DEPENDENCY_PACKAGE"
+    },
+    {
+      "id": "dependencies/runtime",
+      "concept": "DEPENDENCY_RUNTIME"
+    },
+    {
+      "id": "dependencies/transitive",
+      "concept": "DEPENDENCY_TRANSITIVE"
+    },
+    {
+      "id": "dependencies/wasm",
+      "concept": "DEPENDENCY_WASM"
+    },
+    {
+      "id": "evidence/artifact",
+      "concept": "EVIDENCE_ARTIFACT"
+    },
+    {
+      "id": "evidence/attestation",
+      "concept": "EVIDENCE_ATTESTATION"
+    },
+    {
+      "id": "evidence/build",
+      "concept": "EVIDENCE_BUILD"
+    },
+    {
+      "id": "evidence/deployment",
+      "concept": "EVIDENCE_DEPLOYMENT"
+    },
+    {
+      "id": "evidence/event",
+      "concept": "EVIDENCE_EVENT"
+    },
+    {
+      "id": "evidence/source",
+      "concept": "EVIDENCE_SOURCE"
+    },
+    {
+      "id": "evidence/transaction",
+      "concept": "EVIDENCE_TRANSACTION"
+    },
+    {
+      "id": "impact/affected-artifact",
+      "concept": "IMPACT_AFFECTED_ARTIFACT"
+    },
+    {
+      "id": "impact/affected-contract",
+      "concept": "IMPACT_AFFECTED_CONTRACT"
+    },
+    {
+      "id": "impact/affected-deployment",
+      "concept": "IMPACT_AFFECTED_DEPLOYMENT"
+    },
+    {
+      "id": "impact/direct",
+      "concept": "IMPACT_DIRECT"
+    },
+    {
+      "id": "impact/transitive",
+      "concept": "IMPACT_TRANSITIVE"
+    },
+    {
+      "id": "provenance/artifact",
+      "concept": "ARTIFACT"
+    },
+    {
+      "id": "provenance/build",
+      "concept": "BUILD"
+    },
+    {
+      "id": "provenance/contract",
+      "concept": "CONTRACT"
+    },
+    {
+      "id": "provenance/deployment",
+      "concept": "DEPLOYMENT"
+    },
+    {
+      "id": "provenance/source",
+      "concept": "SOURCE"
+    }
+  ],
+  "rules": [
+    {
+      "id": "dependency/artifact-dependency",
+      "severity": "MUST"
+    },
+    {
+      "id": "dependency/contract-dependency",
+      "severity": "MUST"
+    },
+    {
+      "id": "dependency/direct-dependency",
+      "severity": "MUST"
+    },
+    {
+      "id": "dependency/edge-reference-integrity",
+      "severity": "MUST"
+    },
+    {
+      "id": "dependency/transitive-dependency",
+      "severity": "MUST"
+    },
+    {
+      "id": "identity/artifact-identity",
+      "severity": "MUST"
+    },
+    {
+      "id": "identity/contract-identity",
+      "severity": "MUST"
+    },
+    {
+      "id": "identity/wasm-identity",
+      "severity": "MUST"
+    },
+    {
+      "id": "impact/change-impact",
+      "severity": "MUST"
+    },
+    {
+      "id": "impact/deployment-impact",
+      "severity": "MUST"
+    },
+    {
+      "id": "impact/direct-impact",
+      "severity": "MUST"
+    },
+    {
+      "id": "impact/transitive-impact",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/build-to-wasm",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/contract-to-deployment",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/evidence-traceability",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/snapshot-consistency",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/source-to-build",
+      "severity": "MUST"
+    },
+    {
+      "id": "provenance/wasm-to-contract",
+      "severity": "MUST"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "contract-dependency/direct",
+      "kind": "valid"
+    },
+    {
+      "id": "contract-dependency/mixed",
+      "kind": "valid"
+    },
+    {
+      "id": "contract-dependency/transitive",
+      "kind": "valid"
+    },
+    {
+      "id": "impact/direct-impact",
+      "kind": "valid"
+    },
+    {
+      "id": "impact/multi-hop-impact",
+      "kind": "valid"
+    },
+    {
+      "id": "impact/transitive-impact",
+      "kind": "valid"
+    },
+    {
+      "id": "invalid/broken-edge",
+      "kind": "invalid"
+    },
+    {
+      "id": "invalid/invalid-provenance",
+      "kind": "invalid"
+    },
+    {
+      "id": "invalid/malformed-contract",
+      "kind": "invalid"
+    },
+    {
+      "id": "invalid/malformed-dependency",
+      "kind": "invalid"
+    },
+    {
+      "id": "minimal/artifact",
+      "kind": "valid"
+    },
+    {
+      "id": "minimal/contract",
+      "kind": "valid"
+    },
+    {
+      "id": "minimal/provenance",
+      "kind": "valid"
+    },
+    {
+      "id": "provenance/mismatched-wasm",
+      "kind": "valid"
+    },
+    {
+      "id": "provenance/partial-build",
+      "kind": "valid"
+    },
+    {
+      "id": "provenance/unknown-source",
+      "kind": "valid"
+    },
+    {
+      "id": "provenance/verified-build",
+      "kind": "valid"
+    }
+  ],
+  "examples": [
+    {
+      "id": "build-provenance",
+      "target": "https://amasario.dev/spec/v1/schema/build.schema.json"
+    },
+    {
+      "id": "complete-project",
+      "target": "https://amasario.dev/spec/v1/schema/snapshot.schema.json"
+    },
+    {
+      "id": "contract-with-dependencies",
+      "target": "https://amasario.dev/spec/v1/schema/dependency-set.schema.json"
+    },
+    {
+      "id": "deployment-provenance",
+      "target": "https://amasario.dev/spec/v1/schema/deployment.schema.json"
+    },
+    {
+      "id": "impact-analysis",
+      "target": "https://amasario.dev/spec/v1/schema/report.schema.json"
+    },
+    {
+      "id": "minimal-provenance",
+      "target": "https://amasario.dev/spec/v1/schema/provenance.schema.json"
+    },
+    {
+      "id": "transitive-dependency-graph",
+      "target": "https://amasario.dev/spec/v1/schema/graph.schema.json"
+    },
+    {
+      "id": "verified-contract",
+      "target": "https://amasario.dev/spec/v1/schema/provenance.schema.json"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "dependency/contract/basic",
+      "operation": "classify-contract-dependency"
+    },
+    {
+      "id": "dependency/direct/basic",
+      "operation": "normalise-dependency-edge"
+    },
+    {
+      "id": "dependency/transitive/basic",
+      "operation": "aggregate-path-confidence"
+    },
+    {
+      "id": "identity/artifact/basic",
+      "operation": "artifact-identity-key"
+    },
+    {
+      "id": "identity/contract/basic",
+      "operation": "contract-identity-key"
+    },
+    {
+      "id": "identity/wasm/basic",
+      "operation": "wasm-identity-key"
+    },
+    {
+      "id": "impact/direct/basic",
+      "operation": "expand-direct-impact"
+    },
+    {
+      "id": "impact/multi-hop/basic",
+      "operation": "classify-impact-distance"
+    },
+    {
+      "id": "impact/transitive/basic",
+      "operation": "expand-transitive-impact"
+    },
+    {
+      "id": "provenance/build/basic",
+      "operation": "normalise-build-provenance"
+    },
+    {
+      "id": "provenance/deployment/basic",
+      "operation": "derive-deployment-status"
+    },
+    {
+      "id": "provenance/source/basic",
+      "operation": "normalise-source-provenance"
+    },
+    {
+      "id": "provenance/wasm/basic",
+      "operation": "compare-artifact-to-deployed-executable"
+    }
+  ]
+}
