@@ -30,7 +30,7 @@
       "type": "boolean"
     },
     "incomparableReason": {
-      "description": "Why the snapshots were not comparable. Required when comparable is false, enforced by rule compatibility/diff-consistency.",
+      "description": "Why the snapshots were not comparable. Required when comparable is false, enforced by rule impact/change-impact.",
       "enum": [
         "API_VERSION_MISMATCH",
         "SPEC_VERSION_INCOMPATIBLE",
@@ -112,7 +112,7 @@
       }
     },
     "summary": {
-      "description": "Counts by category and change type, with the total. Recorded so that the summary cannot disagree with the changes array, and rule compatibility/diff-consistency requires them to agree.",
+      "description": "Counts by category and change type, with the total. Recorded so that the summary cannot disagree with the changes array, and rule impact/change-impact requires them to agree.",
       "type": "object",
       "required": ["total"],
       "additionalProperties": false,

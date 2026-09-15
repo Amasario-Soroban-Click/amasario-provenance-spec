@@ -40,11 +40,11 @@
       "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
     },
     "network": {
-      "description": "The network, surfaced at the top level so that a snapshot is self-describing without walking into the boundary. Rule compatibility/snapshot-consistency requires this to equal boundary.network.",
+      "description": "The network, surfaced at the top level so that a snapshot is self-describing without walking into the boundary. Rule provenance/contract-to-deployment requires this to equal boundary.network, so the repetition cannot drift into two different networks.",
       "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
     },
     "ledgerBoundary": {
-      "description": "The ledger boundary, surfaced at the top level. Rule compatibility/snapshot-consistency requires this to equal boundary.ledger.",
+      "description": "The ledger boundary, surfaced at the top level. Rule provenance/contract-to-deployment requires this to equal boundary.ledger.",
       "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
     },
     "contract": {
@@ -102,7 +102,7 @@
       "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
     },
     "volatileFields": {
-      "description": "The field paths excluded from contentDigest. Declared rather than fixed in prose so that a consumer can recompute the digest itself and get the same answer; rule compatibility/diff-consistency requires that any field listed here is genuinely volatile.",
+      "description": "The field paths excluded from contentDigest. Declared rather than fixed in prose so that a consumer can recompute the digest itself and get the same answer; rule impact/change-impact requires that any field listed here is genuinely volatile.",
       "type": "array",
       "items": {
         "type": "string",
