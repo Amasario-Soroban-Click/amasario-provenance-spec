@@ -67,6 +67,13 @@
         "$ref": "https://amasario.dev/spec/v1/schema/impact.schema.json"
       }
     },
+    "attestations": {
+      "description": "The attestation records this document references. Carried here because a provenance document that cites ATTESTATION evidence must be self-contained enough for a consumer to evaluate the claim the attestation actually makes, rather than only knowing that an attestation was cited.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/attestation.schema.json"
+      }
+    },
     "boundary": {
       "description": "The network and ledger boundary within which every observation in this document was made. A claim without a boundary is not reproducible, so this field is required.",
       "$ref": "#/$defs/observationBoundary"
