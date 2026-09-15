@@ -326,7 +326,12 @@ function main(): number {
   }
 
   // Unexpected root entries.
-  const present = readdirSync(REPO_ROOT);
+  //
+  // Three entries exist in a working checkout but are not part of the published
+  // repository, so they are tolerated by name rather than by pattern. Naming them
+  // keeps the check strict: anything else at the root is still a failure.
+  const LOCAL_ONLY_ENTRIES = new Set(['.git', 'node_modules']);
+  const present = readdirSync(REPO_ROOT).filter((entry) => !LOCAL_ONLY_ENTRIES.has(entry));
   const expectedRoot = new Set([
     ...ROOT_FILES,
     ...ALLOWED_ROOT_EXTRAS,
