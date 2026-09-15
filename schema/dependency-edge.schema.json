@@ -38,6 +38,10 @@
       "description": "The dependency classification, when this edge is a dependency. Reuses the dependency-types enumeration by reference rather than restating it, so the two cannot drift apart.",
       "$ref": "https://amasario.dev/spec/v1/schema/dependency.schema.json#/properties/type"
     },
+    "basis": {
+      "description": "How the dependency was established. Optional at this level because it applies only to dependency edges: an OBSERVED_IN or VERIFIED_BY edge does not have a dependency basis. Rule dependency/direct-dependency requires it whenever the relationship is DEPENDS_ON, which is where the requirement actually belongs. Reuses the basis enumeration from dependency.schema.json rather than restating it.",
+      "$ref": "https://amasario.dev/spec/v1/schema/dependency.schema.json#/properties/basis"
+    },
     "evidence": {
       "description": "Evidence establishing this edge. At least one record is required.",
       "type": "array",
