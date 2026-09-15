@@ -22,7 +22,13 @@
     "forceConsistentCasingInFileNames": true,
 
     /* Module hygiene */
-    "verbatimModuleSyntax": true,
+    // verbatimModuleSyntax is deliberately disabled. It forbids importing a CommonJS
+    // `export =` module from ESM without a namespace import, and the JSON Schema
+    // validator (ajv) plus its format plugin are CommonJS-only. Keeping the flag would
+    // force a createRequire indirection whose only purpose is to work around the
+    // flag, which reduces clarity without making anything safer. strict and the
+    // noUnsafe* lint rules still enforce the guarantees that matter here.
+    "verbatimModuleSyntax": false,
     "isolatedModules": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,

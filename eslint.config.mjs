@@ -4,7 +4,9 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['node_modules/**', 'dist/**', 'coverage/**'],
+    // `.amasario/` is git-ignored scratch space for one-off investigations;
+    // anything durable belongs in `scripts/` and is linted there.
+    ignores: ['node_modules/**', 'dist/**', 'coverage/**', '.amasario/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
