@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/deployment.schema.json",
+  "title": "Deployment",
+  "description": "The record of an executable becoming a contract. A deployment is a distinct entity from both the artifact that was deployed and the contract that resulted, because the three can diverge: an upload can occur without instantiation, a contract can be upgraded without a new deployment of its first version, and a failed deployment leaves a transaction but no contract.",
+  "type": "object",
+  "required": ["contractId", "network", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "contractId": {
+      "description": "The contract address this deployment concerns.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "network": {
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "status": {
+      "description": "What is known about this deployment. OBSERVED is the honest default for a record found in a transaction that was not inspected in full; CONFIRMED is only assertable from a successful transaction together with a network observation of the resulting contract.",
+      "enum": ["OBSERVED", "CONFIRMED", "UNCONFIRMED", "FAILED", "UNKNOWN"]
+    },
+    "transaction": {
+      "description": "The transaction that carried the deployment.",
+      "$ref": "https://amasario.dev/spec/v1/schema/transaction.schema.json"
+    },
+    "ledger": {
+      "description": "The ledger the deployment transaction was included in.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "operation": {
+      "description": "The zero-based index of the operation that performed the deployment within its transaction.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "wasmHash": {
+      "description": "The hash of the executable that was deployed. Kept alongside the resulting contract's hash so that a deployment can be analysed even if the contract has since been upgraded away from it.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "deploymentArtifact": {
+      "description": "The artifact that was uploaded as part of this deployment, when the upload was observable.",
+      "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json"
+    },
+    "deployer": {
+      "description": "The account that signed the deployment, where the operation recorded it. Recorded as an observation about who submitted the transaction, never as a claim about ownership or authorship.",
+      "type": "string",
+      "maxLength": 128
+    },
+    "upgradeOf": {
+      "description": "The previous executable hash when this deployment was an upgrade rather than a first deployment. Absent means the question was not answered.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "evidence": {
+      "description": "Evidence references supporting this deployment record.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}

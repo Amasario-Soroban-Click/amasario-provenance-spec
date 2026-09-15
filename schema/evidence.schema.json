@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/evidence.schema.json",
+  "title": "Evidence",
+  "description": "A record supporting a specific claim. Evidence is the only thing that makes an Amasario claim assertable, so two rules are enforced structurally here: every record must state the claim it supports, and each evidence class has its own required fields so that a record cannot claim to be stronger evidence than it is. A per-type conditional in allOf rejects a record that names a class without supplying that class's distinguishing fields.",
+  "type": "object",
+  "required": ["id", "type", "claim", "observedAt"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The evidence identifier, unique within the producing document and referenced by every claim that relies on it.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "type": {
+      "description": "The evidence class. An unrecognised term requires the consumer to treat the evidence as UNKNOWN rather than to infer a class, because inferring a class would attribute evidentiary weight the record never claimed.",
+      "enum": [
+        "SOURCE",
+        "BUILD",
+        "ARTIFACT",
+        "WASM",
+        "DEPLOYMENT",
+        "TRANSACTION",
+        "EVENT",
+        "ATTESTATION",
+        "OBSERVATION"
+      ]
+    },
+    "claim": {
+      "description": "The exact claim this record supports, stated as a sentence. Required, and required to be specific: the purpose of this field is that a reader can decide whether the record actually bears on the claim, which is impossible if the field says only 'provenance'.",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2048
+    },
+    "supportsRelationships": {
+      "description": "Identifiers of the dependency edges or impact findings this evidence supports, when the evidence is scoped to specific relationships rather than to the document as a whole.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "observedAt": {
+      "description": "When this record was observed. Distinct from any timestamp the underlying source reports.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "boundary": {
+      "description": "The network and ledger boundary of the observation, when known. Required for every evidence class that is derived from network observation, which is enforced by rule provenance/evidence-traceability.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "digest": {
+      "description": "A digest over whatever the evidence record points at, when the evidence is content-addressable.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "repository": {
+      "description": "SOURCE evidence: the repository the revision was read from.",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "revision": {
+      "description": "SOURCE evidence: the exact revision observed.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "toolchain": {
+      "description": "BUILD evidence: the toolchain identity the build used.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "configurationDigest": {
+      "description": "BUILD evidence: the digest of the build configuration.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "artifactType": {
+      "description": "ARTIFACT evidence: the artifact class the digest was computed over. References artifact.schema.json rather than restating its enumeration.",
+      "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json#/properties/type"
+    },
+    "contractId": {
+      "description": "WASM, DEPLOYMENT or EVENT evidence: the contract address the observation concerns.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "transactionHash": {
+      "description": "TRANSACTION, DEPLOYMENT or EVENT evidence: the transaction the observation derives from.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ledger": {
+      "description": "TRANSACTION, DEPLOYMENT or EVENT evidence: the ledger the observation derives from.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "successful": {
+      "description": "TRANSACTION evidence: whether the transaction succeeded. Required for this class so that a failed transaction cannot be cited as evidence of an effect.",
+      "type": "boolean"
+    },
+    "attestationId": {
+      "description": "ATTESTATION evidence: the identifier of the attestation record this evidence refers to.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "observationNote": {
+      "description": "OBSERVATION evidence: what was observed, stated factually. This class asserts presence only and must not be used to assert an effect.",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2048
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "SOURCE" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["repository", "revision"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "BUILD" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["toolchain", "configurationDigest"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "ARTIFACT" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["artifactType", "digest"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "WASM" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["contractId", "digest", "boundary"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "DEPLOYMENT" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["contractId", "transactionHash", "ledger", "boundary"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "TRANSACTION" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["transactionHash", "ledger", "successful", "boundary"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "EVENT" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["contractId", "transactionHash", "ledger", "boundary"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "ATTESTATION" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["attestationId"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "OBSERVATION" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["observationNote"]
+      }
+    }
+  ]
+}
