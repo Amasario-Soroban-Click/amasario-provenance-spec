@@ -1,0 +1,122 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/multi-hop-impact
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/impact.schema.json
+description: >
+  A three-hop impact finding: a source revision changes and the effect reaches the
+  executable deployed from the artifact derived from the build. The fixture is
+  classified as TRANSITIVE and MULTI_HOP together, because the two are independent
+  statements about the same finding, and it carries the directional terms from the
+  specifications rather than a score.
+document:
+  id: impact_source_revision_changed_wasm_affected
+  changedEntity:
+    kind: SOURCE
+    id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+  affectedEntity:
+    kind: WASM
+    id: artifact_wasm_alpha
+    digest:
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+  impactType:
+    - TRANSITIVE
+    - MULTI_HOP
+    - ARTIFACT
+  hopDepth: 3
+  path:
+    nodes:
+      - kind: SOURCE
+        id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+      - kind: BUILD
+        id: build_alpha_v1
+      - kind: ARTIFACT
+        id: artifact_build_output
+      - kind: WASM
+        id: artifact_wasm_alpha
+    steps:
+      - source:
+          kind: BUILD
+          id: build_alpha_v1
+        target:
+          kind: SOURCE
+          id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+        relationship: BUILT_FROM
+        edgeId: edge_build_alpha_source
+        direction: inverted
+        evidence:
+          - ev_source_revision
+        confidence:
+          level: HIGH_CONFIDENCE
+          evidence:
+            - ev_source_revision
+      - source:
+          kind: ARTIFACT
+          id: artifact_build_output
+        target:
+          kind: BUILD
+          id: build_alpha_v1
+        relationship: DERIVED_FROM
+        edgeId: edge_build_artifact_build
+        direction: inverted
+        evidence:
+          - ev_build_config
+        confidence:
+          level: MEDIUM_CONFIDENCE
+          evidence:
+            - ev_build_config
+      - source:
+          kind: WASM
+          id: artifact_wasm_alpha
+        target:
+          kind: ARTIFACT
+          id: artifact_build_output
+        relationship: DERIVED_FROM
+        edgeId: edge_wasm_build_artifact
+        direction: inverted
+        evidence:
+          - ev_artifact_wasm
+        confidence:
+          level: MEDIUM_CONFIDENCE
+          evidence:
+            - ev_artifact_wasm
+    hopDepth: 3
+    direction: DEPENDENTS
+    termination: TARGET_REACHED
+    confidence:
+      level: MEDIUM_CONFIDENCE
+      evidence:
+        - ev_source_revision
+        - ev_build_config
+        - ev_artifact_wasm
+  relationshipTypes:
+    - BUILT_FROM
+    - DERIVED_FROM
+    - DERIVED_FROM
+  direction: DEPENDENTS
+  changeType: MODIFIED
+  evidence:
+    - ev_source_revision
+    - ev_build_config
+    - ev_artifact_wasm
+  confidence:
+    level: MEDIUM_CONFIDENCE
+    evidence:
+      - ev_source_revision
+      - ev_build_config
+      - ev_artifact_wasm
+    rationale: Three hops are traversed and the second and third are supported less strongly than the first, so the aggregated level is the minimum ordinal across the steps.
+    aggregation:
+      strategy: minimum_ordinal
+      inputs:
+        - claim: The build was produced from the changed source revision.
+          level: HIGH_CONFIDENCE
+        - claim: The build output was derived from that build.
+          level: MEDIUM_CONFIDENCE
+        - claim: The executable was derived from that build output.
+          level: MEDIUM_CONFIDENCE
+  reason: The executable artifact_wasm_alpha was derived from a build output that was itself derived from the build build_alpha_v1, which was produced from the changed source revision, so a change to that revision may invalidate the deployed executable.
+  verificationState: PARTIALLY_VERIFIED
+  truncated: false
