@@ -1,0 +1,40 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: impact
+file: direct-impact
+rules:
+  - id: impact/direct-impact
+    title: A one-hop finding must be classified direct, evidenced and directional
+    severity: MUST
+    statement: >
+      An impact finding whose hop depth is exactly 1 MUST include DIRECT in its impact
+      type set, MUST carry a path whose node count exceeds its step count by one, MUST
+      carry evidence on the finding and on every step of its path, and MUST state the
+      direction in which the change propagated for the finding and for each step. An
+      impact finding MUST NOT traverse a relationship whose declared change propagation
+      is none.
+    rationale: >
+      The path-length clause is the mechanical check that turns "one hop" from a claim
+      into something a validator can verify, and the per-step evidence requirement is
+      what keeps a one-hop finding as reviewable as it is quick to produce. The
+      propagation clause is the subtle one: OBSERVED_IN and VERIFIED_BY relate facts to
+      their supporting records, not entities to their dependencies, so traversing them
+      would let a re-verification of a contract be reported as a change to it.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/impact.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/impact-path.schema.json
+      - kind: model
+        id: impact/direct
+    fixtures:
+      - impact/direct-impact
+      - invalid/broken-edge
+    examples:
+      - complete-project
+    checks:
+      - The direct-impact fixture has hopDepth 1, DIRECT in its impact type set, and a path of two nodes and one step.
+      - Every step in every impact fixture carries evidence and a direction.
+      - A graph edge whose endpoint cannot resolve is rejected, so a step cannot reference an edge that does not exist.
+    nonGoals:
+      - This rule does not claim the affected entity is broken, only that a change may reach it.

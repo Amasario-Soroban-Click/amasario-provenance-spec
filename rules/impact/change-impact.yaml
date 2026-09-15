@@ -1,0 +1,48 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: impact
+file: change-impact
+rules:
+  - id: impact/change-impact
+    title: A change-triggered finding must name its change, and a diff must be deterministic
+    severity: MUST
+    statement: >
+      An impact finding whose impact type set includes CHANGE MUST carry a changeType.
+      A snapshot diff MUST be produced by canonical comparison, MUST NOT report a
+      difference caused only by ordering or by a volatile field, MUST classify every
+      difference with a category and a change type, and MUST state a reason for each. A
+      diff whose snapshots are not comparable MUST set comparable to false, MUST supply
+      an incomparableReason, and MUST have an empty changes array. A diff summary MUST
+      agree with its own changes array. UPGRADED and DOWNGRADED MUST be used only where
+      the referenced ecosystem establishes an ordering, and MODIFIED MUST be used
+      otherwise.
+    rationale: >
+      A diff is the artefact most likely to be consumed without review, in a pipeline
+      that fails or alerts on any entry, so a single spurious entry makes the whole
+      comparison untrustworthy. Ordering differences are the most common source of such
+      noise, which is why deterministic comparison is a requirement rather than a
+      quality goal. The comparability clause closes a quieter hole: an empty diff is
+      indistinguishable from "nothing changed", so an incomparable pair must be
+      reported as incomparable rather than as unchanged. The ordering clause prevents
+      the specification from guessing whether a version change is an upgrade, since
+      guessing wrong would invert the direction of an impact assessment.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/diff.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/snapshot.schema.json
+      - kind: model
+        id: impact/direct
+    fixtures:
+      - impact/direct-impact
+      - invalid/invalid-provenance
+    examples:
+      - complete-project
+      - impact-analysis
+    checks:
+      - A diff without a comparison mode, a before or an after reference, or a changes array is rejected.
+      - A diff change without a category, a change type or a reason is rejected.
+      - A change type outside the closed enumeration is rejected.
+      - Re-serialising any fixture twice produces the same canonical bytes.
+    nonGoals:
+      - This rule does not define a severity for a change, only what the change is and why it was detected.

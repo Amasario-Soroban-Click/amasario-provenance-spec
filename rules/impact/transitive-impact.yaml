@@ -1,0 +1,46 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: impact
+file: transitive-impact
+rules:
+  - id: impact/transitive-impact
+    title: A multi-hop finding must disclose its path, its depth classification and its weakest link
+    severity: MUST
+    statement: >
+      An impact finding whose hop depth is 2 or more MUST include TRANSITIVE in its
+      impact type set, and MUST additionally include MULTI_HOP when the hop depth is 3
+      or more. It MUST carry a path with per-step evidence and confidence, and its
+      relationshipTypes MUST list the relationship of each step in path order. Its
+      aggregated confidence MUST equal the minimum confidence ordinal among its steps.
+      An entity kind whose affectedKinds includes the affected entity MUST have its
+      corresponding classification present in the impact type set.
+    rationale: >
+      Transitive findings are where impact analysis most easily becomes untrustworthy,
+      because each extra hop multiplies the number of claims a reader would otherwise
+      have to check by hand. Disclosing the path lets a sceptical reader check one hop
+      rather than trusting a depth number, and the minimum-ordinal rule prevents the
+      aggregate from looking cleaner than the messiest link in it. The affected-kinds
+      clause keeps the entity classification and the affected entity from contradicting
+      one another, which is otherwise easy to get wrong when a finding is assembled
+      from several traversals.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/impact.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/impact-path.schema.json
+      - kind: model
+        id: impact/transitive
+      - kind: model
+        id: impact/affected-artifact
+    fixtures:
+      - impact/transitive-impact
+      - impact/multi-hop-impact
+    examples:
+      - impact-analysis
+    checks:
+      - The transitive fixture has hopDepth 2 and carries TRANSITIVE without MULTI_HOP.
+      - The multi-hop fixture has hopDepth 3 and carries TRANSITIVE and MULTI_HOP together.
+      - Both fixtures carry per-step evidence and report the minimum confidence across their steps.
+      - Each fixture's relationshipTypes agrees with the relationships in its path steps.
+    nonGoals:
+      - This rule does not claim that every reachable entity is affected, only those the bounded traversal found.

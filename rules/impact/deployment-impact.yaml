@@ -1,0 +1,45 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: impact
+file: deployment-impact
+rules:
+  - id: impact/deployment-impact
+    title: Deployment impact must be distinguished from contract impact and must exclude failed deployments
+    severity: MUST
+    statement: >
+      An impact finding whose affected entity is a deployment MUST include DEPLOYMENT in
+      its impact type set, MUST identify the ledger at which that deployment was
+      recorded, and MUST NOT name a deployment whose status is UNCONFIRMED, FAILED or
+      UNKNOWN. An impact finding whose affected entity is a contract identity MUST
+      include CONTRACT and MUST be computed against a specific identity version of that
+      contract.
+    rationale: >
+      The two affected kinds lead to different remediation, so a reader who cannot tell
+      them apart cannot act: a deployment finding says the state at an address changed
+      since the analysis was computed, while a contract finding says a contract is in
+      the blast radius. Excluding non-confirmed deployments follows from what an impact
+      finding asserts: a change can only affect a deployment that took effect, so naming
+      a failed deployment would report the effect of a change on an event that never
+      happened. The identity-version clause exists because an address hosts different
+      executables over time, so a contract finding without a version cannot be checked
+      later.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/impact.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/deployment.schema.json
+      - kind: model
+        id: impact/affected-deployment
+      - kind: model
+        id: impact/affected-contract
+    fixtures:
+      - provenance/verified-build
+      - impact/direct-impact
+    examples:
+      - complete-project
+    checks:
+      - The verified-build fixture's deployment is CONFIRMED and its transaction is successful, so it is eligible to appear as an affected deployment.
+      - The complete-project example's finding against a contract carries CONTRACT and references the contract's identity version through the contract record.
+      - A deployment whose transaction is unsuccessful cannot be recorded as CONFIRMED, so it cannot become an affected deployment.
+    nonGoals:
+      - This rule does not recommend any remediation for an affected deployment.
