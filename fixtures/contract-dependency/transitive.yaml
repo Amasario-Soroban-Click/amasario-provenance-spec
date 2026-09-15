@@ -1,0 +1,66 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: contract-dependency/transitive
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+description: >
+  A transitive contract dependency that records the intermediate entity on the
+  dependency itself. The fixture demonstrates the requirement that a transitive edge
+  carries its path, and that the aggregated confidence is lower than either hop: the
+  second hop was observed fewer times and through a single transaction, so the chain
+  is reported at MEDIUM_CONFIDENCE even though each hop alone would be stronger.
+document:
+  id: dep_alpha_gamma_transitive
+  source:
+    kind: CONTRACT
+    id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+  target:
+    kind: CONTRACT
+    id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+  type: TRANSITIVE
+  basis: OBSERVED_INVOCATION
+  path:
+    - kind: CONTRACT
+      id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+  evidence:
+    - ev_invocation_alpha_beta
+    - ev_invocation_beta_gamma
+  confidence:
+    level: MEDIUM_CONFIDENCE
+    evidence:
+      - ev_invocation_alpha_beta
+      - ev_invocation_beta_gamma
+    rationale: Both hops were observed, but the second was observed only once, so the aggregated level is the minimum across the path rather than the stronger of the two hops.
+    aggregation:
+      strategy: minimum_ordinal
+      inputs:
+        - claim: The contract alpha invokes contract beta.
+          level: HIGH_CONFIDENCE
+        - claim: The contract beta invokes contract gamma.
+          level: MEDIUM_CONFIDENCE
+  network:
+    id: testnet
+    type: TESTNET
+    passphrase: 'Test SDF Network ; September 2015'
+    networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+    rpcUrl: https://soroban-testnet.stellar.org
+  firstObserved:
+    network:
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+    ledger: 1234602
+    observedAt: '2026-01-15T12:05:00Z'
+  lastObserved:
+    network:
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+    ledger: 1234610
+    observedAt: '2026-01-15T12:09:00Z'
+  verificationStatus: PARTIALLY_VERIFIED
+  metadata:
+    hops: 2

@@ -1,0 +1,122 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: contract-dependency/mixed
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/dependency-set.schema.json
+description: >
+  A dependency set containing direct edges, a transitive edge, a mutual invocation
+  pair that forms a cycle, and one unresolved lookup. It exists to exercise the parts
+  of the model that are easiest to omit: the cycle is reported rather than resolved,
+  the direct and transitive lists partition the dependency edges, and the unresolved
+  entry keeps a lookup failure visible instead of letting it look like an absence of
+  dependency.
+document:
+  id: depset_alpha
+  edges:
+    - id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      dependencyClass: DIRECT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+      observed: true
+      verificationStatus: VERIFIED
+    - id: edge_beta_gamma
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      relationship: INVOCATES
+      dependencyClass: DIRECT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_beta_gamma
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_beta_gamma
+      observed: true
+      verificationStatus: VERIFIED
+    - id: edge_gamma_beta
+      source:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      dependencyClass: DIRECT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_gamma_beta
+      confidence:
+        level: MEDIUM_CONFIDENCE
+        evidence:
+          - ev_invocation_gamma_beta
+        rationale: The reverse invocation was observed once and is the mechanism that creates the cycle, so it is recorded at a lower level than the forward call.
+      observed: true
+      verificationStatus: PARTIALLY_VERIFIED
+    - id: edge_alpha_gamma
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      relationship: DEPENDS_ON
+      dependencyClass: TRANSITIVE
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_alpha_beta
+        - ev_invocation_beta_gamma
+      confidence:
+        level: MEDIUM_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+          - ev_invocation_beta_gamma
+        rationale: Alpha reaches gamma only through beta, so the edge is transitive and its level is the minimum across the path.
+      observed: false
+      verificationStatus: PARTIALLY_VERIFIED
+      metadata:
+        hops: 2
+  direct:
+    - edge_alpha_beta
+    - edge_beta_gamma
+    - edge_gamma_beta
+  transitive:
+    - edge_alpha_gamma
+  cycles:
+    - edges:
+        - edge_beta_gamma
+        - edge_gamma_beta
+      length: 2
+  maxDepth: 3
+  truncated: false
+  unresolved:
+    - source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      reason: NOT_FOUND
+      detail: No contract metadata was returned for the address referenced in a stored 32-byte value, so the reference could not be resolved to an entity.
+  boundary:
+    network:
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    ledger: 1234789
+    observedAt: '2026-01-15T13:40:00Z'
