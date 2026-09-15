@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/impact.schema.json",
+  "title": "Impact Finding",
+  "description": "One statement that a change to some entity may affect another entity, with the reasoning preserved. An impact finding is deliberately not a score: it carries the changed entity, the affected entity, the path between them, the hop count, the relationship types along that path, the evidence, the confidence, the reason, the change type and the verification state, so that a reader can disagree with the conclusion by inspecting the reasoning instead of having to trust a number.",
+  "type": "object",
+  "required": ["id", "changedEntity", "affectedEntity", "impactType", "hopDepth", "evidence", "confidence", "reason"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The finding identifier, stable across runs so that a snapshot diff can detect a genuinely new finding rather than a reordering.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "changedEntity": {
+      "description": "The entity that changed or is assumed to change.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "affectedEntity": {
+      "description": "The entity potentially affected.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "impactType": {
+      "description": "The classifications of this finding. A set rather than a single value, because one finding is routinely several at once: a change reaching a contract three hops away is TRANSITIVE, MULTI_HOP and CONTRACT simultaneously. At least one term must come from the distance family, which rule impact/direct-impact enforces.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["DIRECT", "TRANSITIVE", "MULTI_HOP", "ARTIFACT", "CONTRACT", "DEPLOYMENT", "CHANGE"]
+      }
+    },
+    "hopDepth": {
+      "description": "The number of edges between the changed and affected entity. Zero denotes the changed entity affecting itself, which is only meaningful for a CHANGE-type finding. Must agree with the distance terms in impactType: depth 1 requires DIRECT, depth greater than 1 requires TRANSITIVE, and depth 3 or more requires MULTI_HOP.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "path": {
+      "description": "The path from the changed entity to the affected entity. Required when hopDepth is greater than zero, because an impact claim whose path is not shown cannot be checked.",
+      "$ref": "https://amasario.dev/spec/v1/schema/impact-path.schema.json"
+    },
+    "relationshipTypes": {
+      "description": "The relationship types traversed, in path order. Repeated from the path for the convenience of consumers that aggregate by relationship without walking the path, and required to agree with it by rule impact/transitive-impact. References the canonical enumeration in dependency-edge.schema.json.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/dependency-edge.schema.json#/properties/relationship"
+      }
+    },
+    "direction": {
+      "description": "Which way the change propagated. Derived from the changePropagation of each relationship traversed, never chosen freely: DEPENDENTS means the changed entity was traversed to its dependents, DEPENDENCIES means the traversal followed the changed entity's own dependencies, and BOTH means both were followed.",
+      "enum": ["DEPENDENTS", "DEPENDENCIES", "BOTH"]
+    },
+    "changeType": {
+      "description": "The kind of change that triggered this finding. Required when impactType includes CHANGE, and useful otherwise as the reason the analysis was run.",
+      "enum": ["ADDED", "REMOVED", "MODIFIED", "UPGRADED", "DOWNGRADED", "REPLACED"]
+    },
+    "evidence": {
+      "description": "Evidence supporting this finding. Required and non-empty: an impact claim with no evidence is a prediction, not a finding.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    },
+    "confidence": {
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    },
+    "reason": {
+      "description": "Why this entity is considered affected, stated in terms of the traversed relationships so that a reader can follow it. This is what replaces a score.",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2048
+    },
+    "verificationState": {
+      "description": "Whether the relationships this finding relies on were themselves verified. A finding built on unverified edges must not present itself as established. References the canonical verification-statuses enumeration in provenance.schema.json.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/properties/verificationStatus"
+    },
+    "boundary": {
+      "description": "The observation boundary the finding was computed at.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "truncated": {
+      "description": "Whether propagation was bounded before exhaustion. When true, further affected entities may exist that are not listed.",
+      "type": "boolean"
+    }
+  }
+}

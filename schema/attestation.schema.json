@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/attestation.schema.json",
+  "title": "Attestation",
+  "description": "A statement by an identified issuer about a subject, which Amasario can reference as evidence. Two constraints are structural rather than advisory. First, the issuer is required, because an unattributed statement is not evidence. Second, the claim is required verbatim and scoped to the subject, because an attestation supports exactly the claim it states: an attestation of a reproducible build must never be read as an attestation of contract behaviour, correctness or safety.",
+  "type": "object",
+  "required": ["id", "issuer", "subject", "claim", "issuedAt", "verificationStatus"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The attestation identifier, referenced by ATTESTATION evidence records and by build and deployment records that cite it.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "issuer": {
+      "description": "Who made the statement. Required, and identified by more than a display name where possible.",
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The issuer's identity, for example an organisation, a service, or an account address.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "url": {
+          "description": "Where the issuer is described, when one exists.",
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "publicKey": {
+          "description": "The public key the signature can be checked against, in the encoding named by signature.algorithm. A public key is public data; a private key or seed must never appear in an Amasario document.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "subject": {
+      "description": "What the statement is about.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "claim": {
+      "description": "The exact claim the issuer makes, in the issuer's own terms. Recorded verbatim rather than normalised, because normalising an attestation into Amasario's vocabulary risks widening it beyond what the issuer said.",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 4096
+    },
+    "claimDigest": {
+      "description": "A digest over the canonical form of the claim, so that a consumer can confirm it is evaluating the same claim text the issuer signed.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "method": {
+      "description": "How the attestation can be checked. Required in practice for any attestation used to support a claim above MEDIUM_CONFIDENCE, which rule provenance/source-to-build enforces.",
+      "enum": ["SIGNATURE", "INDEPENDENT_REBUILD", "SERVICE_RECORD", "MANUAL_OBSERVATION"]
+    },
+    "signature": {
+      "description": "The signature over the claim, when the method is SIGNATURE.",
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "description": "The signature algorithm. Named explicitly so a consumer never has to guess how to verify.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "value": {
+          "description": "The signature bytes, encoded as declared by encoding.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "encoding": {
+          "enum": ["hex", "base64"]
+        }
+      }
+    },
+    "issuedAt": {
+      "description": "When the issuer states the attestation was made.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "expiresAt": {
+      "description": "When the attestation stops being valid, when the issuer states one. An expired attestation must not be used as supporting evidence without saying so.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "verificationStatus": {
+      "description": "Whether the attestation itself was checked. UNVERIFIED is the correct value for an attestation whose signature was not checked: the statement is recorded, no weight is claimed for it, and neither of those facts is hidden.",
+      "enum": ["VERIFIED", "PARTIALLY_VERIFIED", "UNVERIFIED", "CONFLICTING", "UNKNOWN"]
+    },
+    "verificationNote": {
+      "description": "What checking was actually performed, or why none was. Required by rule provenance/source-to-build when the status is not VERIFIED, so that an unchecked claim is never left looking checked.",
+      "type": "string",
+      "maxLength": 2048
+    },
+    "scopeLimitations": {
+      "description": "What the attestation explicitly does not cover, where the issuer states it. Recorded so that a narrow attestation cannot be silently read as a broad one.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 4,
+        "maxLength": 1024
+      }
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/impact-path.schema.json",
+  "title": "Impact Path",
+  "description": "The ordered chain of entities and typed relationships connecting a changed entity to an affected one. The path is what makes an impact finding auditable: a consumer can walk the steps and check each relationship against its evidence, which is impossible from a hop count alone. Steps are typed so that a path is never merely a list of nodes with an implied sequence.",
+  "type": "object",
+  "required": ["nodes", "steps", "hopDepth"],
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "description": "The entities along the path, starting at the changed entity and ending at the affected entity. Must contain exactly one more entry than steps, which rule impact/transitive-impact enforces because JSON Schema cannot express the relationship between two array lengths.",
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+      }
+    },
+    "steps": {
+      "description": "The typed relationships between consecutive nodes.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "hopDepth": {
+      "description": "The number of steps. Equal to the length of steps.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "direction": {
+      "description": "Which way the change propagated along this path.",
+      "enum": ["DEPENDENTS", "DEPENDENCIES", "BOTH"]
+    },
+    "termination": {
+      "description": "Why the path stops where it does. Recorded so that a bounded traversal is not mistaken for an exhausted one.",
+      "enum": ["TARGET_REACHED", "MAX_DEPTH_REACHED", "NO_PROPAGATING_EDGE", "CYCLE_DETECTED", "EVIDENCE_UNAVAILABLE"]
+    },
+    "confidence": {
+      "description": "The aggregated confidence for the whole path, computed as the minimum ordinal across the steps.",
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    }
+  },
+  "$defs": {
+    "step": {
+      "description": "One traversed relationship within a path.",
+      "type": "object",
+      "required": ["source", "target", "relationship"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "The entity the step starts at.",
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+        },
+        "target": {
+          "description": "The entity the step ends at.",
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+        },
+        "relationship": {
+          "description": "The relationship traversed. Constrained to relationship-types, whose changePropagation decides whether this step propagates a change forward, backward, or not at all.",
+          "enum": [
+            "DEPENDS_ON",
+            "INVOCATES",
+            "BUILT_FROM",
+            "DERIVED_FROM",
+            "DEPLOYED_AS",
+            "OBSERVED_IN",
+            "VERIFIED_BY",
+            "AFFECTS"
+          ]
+        },
+        "edgeId": {
+          "description": "The dependency edge this step corresponds to, when the step came from an edge in the analysed graph.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "direction": {
+          "description": "Whether the change propagated with the arrow or against it at this step. Required, because the same relationship can be traversed either way and the two mean different things.",
+          "enum": ["forward", "inverted"]
+        },
+        "evidence": {
+          "description": "Evidence for this step. Rule impact/transitive-impact requires evidence on every step, not only on the finding as a whole, because a path is only as supported as its weakest link.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+          }
+        },
+        "confidence": {
+          "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+        }
+      }
+    }
+  }
+}
