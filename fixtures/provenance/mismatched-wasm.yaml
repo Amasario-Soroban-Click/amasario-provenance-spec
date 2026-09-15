@@ -1,0 +1,129 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/mismatched-wasm
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+description: >
+  The case the specification exists to make representable: a claimed source revision
+  and build are recorded, but the digest of the artifact that build produced does not
+  match the executable the network reports for the contract. The result is
+  CONFLICTING with contradicting evidence named explicitly. It is not PARTIALLY
+  VERIFIED, and under no interpretation may it be VERIFIED, because a chain whose
+  decisive link disagrees with itself is not a partially established chain.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  contract:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    identityVersion: 2
+    wasmHash: &deployedHash
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    ledgerSequence: 1234900
+    firstObservedLedger: 1234500
+    lastObservedLedger: 1234900
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    executableType: WASM
+    evidence:
+      - ev_wasm_observed
+      - ev_artifact_built
+    upgradeHistory:
+      - ledger: 1234900
+        wasmHash:
+          algorithm: sha256
+          value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+        evidence:
+          - ev_wasm_observed
+  wasm:
+    hash: *deployedHash
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    sourceRepository: https://example.invalid/amasario/alpha-contract
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    reproducible: NOT_REPRODUCED
+    evidence:
+      - ev_wasm_observed
+      - ev_artifact_built
+  source:
+    repositoryUrl: https://example.invalid/amasario/alpha-contract
+    repositoryName: alpha-contract
+    revision: 5516af291249414332282f5b6655c9033f73e3fc
+    ref:
+      type: branch
+      name: main
+    buildRelationship: BUILT_BY_DECLARED_BUILD
+    evidence:
+      - ev_source_claim
+  build:
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    toolchain:
+      name: rustc
+      version: 1.84.0
+      target: wasm32-unknown-unknown
+    configuration:
+      digest:
+        algorithm: sha256
+        value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+      profile: release
+    artifact:
+      id: artifact_wasm_claimed
+      type: WASM
+      digest: &builtHash
+        algorithm: sha256
+        value: 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158
+      reproducible: REPRODUCED
+      evidence:
+        - ev_artifact_built
+    artifactDigest: *builtHash
+    reproducibility: REPRODUCED
+    evidence:
+      - ev_artifact_built
+  artifacts:
+    - id: artifact_wasm_claimed
+      type: WASM
+      digest: *builtHash
+      reproducible: REPRODUCED
+      evidence:
+        - ev_artifact_built
+  evidence:
+    - id: ev_source_claim
+      type: SOURCE
+      claim: The source revision 5516af291249414332282f5b6655c9033f73e3fc of alpha-contract is claimed to be the origin of the executable deployed at the contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB.
+      observedAt: '2026-01-16T09:00:00Z'
+      repository: https://example.invalid/amasario/alpha-contract
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+    - id: ev_artifact_built
+      type: ARTIFACT
+      claim: Building the revision 5516af291249414332282f5b6655c9033f73e3fc with rustc 1.84.0 and the recorded release configuration produced a WASM artifact with digest 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158.
+      observedAt: '2026-01-16T09:10:00Z'
+      artifactType: WASM
+      digest: *builtHash
+    - id: ev_wasm_observed
+      type: WASM
+      claim: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB hosts an executable with sha256 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 at ledger 1234900.
+      observedAt: '2026-01-16T09:20:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      digest: *deployedHash
+      boundary:
+        network: *net
+        ledger: 1234900
+        observedAt: '2026-01-16T09:20:00Z'
+  confidence:
+    level: LOW_CONFIDENCE
+    evidence:
+      - ev_source_claim
+      - ev_wasm_observed
+    contradictingEvidence:
+      - ev_artifact_built
+    rationale: The deployed executable hash does not match the digest of the artifact produced from the claimed source revision and build configuration, so the provenance chain is contradicted rather than incomplete.
+  verificationStatus: CONFLICTING
+  boundary:
+    network: *net
+    ledger: 1234900
+    observedAt: '2026-01-16T09:20:00Z'

@@ -1,0 +1,147 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/partial-build
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+description: >
+  A chain in which the source revision and the produced artifact agree with the
+  deployed executable, but the build toolchain identity could not be established. The
+  fixture demonstrates that a partially known chain is reported as
+  PARTIALLY_VERIFIED with MEDIUM_CONFIDENCE rather than rounded up to VERIFIED,
+  because the toolchain is what determines whether the artifact is reproducible.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  contract:
+    contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    identityVersion: 1
+    wasmHash: &wasmB
+      algorithm: sha256
+      value: 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158
+    ledgerSequence: 1234699
+    firstObservedLedger: 1234699
+    lastObservedLedger: 1234699
+    deploymentTransaction: 93e43d166c59c15953374c461a2e609d33b3bfe350a6dbc8247a76ff3fd022f9
+    executableType: WASM
+    evidence:
+      - ev_wasm_beta
+      - ev_deployment_beta
+  wasm:
+    hash: *wasmB
+    contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+    sourceRepository: https://example.invalid/amasario/beta-contract
+    sourceRevision: 133f902509acf9764b8a0ff39a6d635c78e6b925
+    deploymentTransaction: 93e43d166c59c15953374c461a2e609d33b3bfe350a6dbc8247a76ff3fd022f9
+    reproducible: NOT_ATTEMPTED
+    evidence:
+      - ev_wasm_beta
+      - ev_artifact_wasm_beta
+  source:
+    repositoryUrl: https://example.invalid/amasario/beta-contract
+    repositoryName: beta-contract
+    revision: 133f902509acf9764b8a0ff39a6d635c78e6b925
+    buildRelationship: BUILT_BY_INFERRED_BUILD
+    evidence:
+      - ev_source_beta
+  build:
+    sourceRevision: 133f902509acf9764b8a0ff39a6d635c78e6b925
+    artifact:
+      id: artifact_wasm_beta
+      type: WASM
+      digest: *wasmB
+      reproducible: NOT_ATTEMPTED
+      evidence:
+        - ev_artifact_wasm_beta
+    artifactDigest: *wasmB
+    reproducibility: UNKNOWN
+    evidence:
+      - ev_artifact_wasm_beta
+  artifacts:
+    - id: artifact_wasm_beta
+      type: WASM
+      digest: *wasmB
+      mediaType: application/wasm
+      reproducible: NOT_ATTEMPTED
+      evidence:
+        - ev_artifact_wasm_beta
+  deployment:
+    contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+    network: *net
+    status: CONFIRMED
+    ledger: 1234699
+    operation: 0
+    wasmHash: *wasmB
+    evidence:
+      - ev_deployment_beta
+      - ev_transaction_deploy_beta
+  evidence:
+    - id: ev_source_beta
+      type: SOURCE
+      claim: The deployed executable of the contract CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I is claimed to originate from the revision 133f902509acf9764b8a0ff39a6d635c78e6b925 of beta-contract.
+      observedAt: '2026-01-14T15:00:00Z'
+      repository: https://example.invalid/amasario/beta-contract
+      revision: 133f902509acf9764b8a0ff39a6d635c78e6b925
+    - id: ev_artifact_wasm_beta
+      type: ARTIFACT
+      claim: A WASM artifact with digest 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158 was recorded, but the build that produced it did not record a toolchain identity.
+      observedAt: '2026-01-14T15:00:00Z'
+      artifactType: WASM
+      digest: *wasmB
+    - id: ev_wasm_beta
+      type: WASM
+      claim: The contract CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I hosts an executable with sha256 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158 at ledger 1234789.
+      observedAt: '2026-01-15T12:00:00Z'
+      contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      digest: *wasmB
+      boundary:
+        network: *net
+        ledger: 1234789
+        observedAt: '2026-01-15T12:00:00Z'
+    - id: ev_transaction_deploy_beta
+      type: TRANSACTION
+      claim: The transaction 93e43d166c59c15953374c461a2e609d33b3bfe350a6dbc8247a76ff3fd022f9 succeeded at ledger 1234699.
+      observedAt: '2026-01-15T12:00:00Z'
+      transactionHash: 93e43d166c59c15953374c461a2e609d33b3bfe350a6dbc8247a76ff3fd022f9
+      ledger: 1234699
+      successful: true
+      boundary:
+        network: *net
+        ledger: 1234789
+        observedAt: '2026-01-15T12:00:00Z'
+    - id: ev_deployment_beta
+      type: DEPLOYMENT
+      claim: The executable 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158 became the contract CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I at ledger 1234699.
+      observedAt: '2026-01-15T12:00:00Z'
+      contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      transactionHash: 93e43d166c59c15953374c461a2e609d33b3bfe350a6dbc8247a76ff3fd022f9
+      ledger: 1234699
+      boundary:
+        network: *net
+        ledger: 1234789
+        observedAt: '2026-01-15T12:00:00Z'
+  confidence:
+    level: MEDIUM_CONFIDENCE
+    evidence:
+      - ev_source_beta
+      - ev_artifact_wasm_beta
+      - ev_wasm_beta
+    rationale: The artifact digest matches the deployed executable, but the build toolchain identity is missing, so the build cannot be re-run to confirm the artifact was produced from the claimed revision.
+    aggregation:
+      strategy: minimum_ordinal
+      inputs:
+        - claim: The deployed executable matches the recorded artifact digest.
+          level: VERIFIED
+        - claim: The build toolchain identity is established.
+          level: UNKNOWN
+  verificationStatus: PARTIALLY_VERIFIED
+  boundary:
+    network: *net
+    ledger: 1234789
+    observedAt: '2026-01-15T12:00:00Z'

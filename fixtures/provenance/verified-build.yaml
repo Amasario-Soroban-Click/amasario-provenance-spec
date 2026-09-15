@@ -1,0 +1,228 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/verified-build
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+description: >
+  A provenance chain in which source, build, artifact, executable and deployment all
+  agree. This is the only shape that may be reported as VERIFIED, and it is included
+  so that the weaker fixtures have something to fall short of. The toolchain identity
+  is illustrative, and every digest here is synthetic.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  contract:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    identityVersion: 1
+    wasmHash: &wasmA
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    ledgerSequence: 1234567
+    firstObservedLedger: 1234500
+    lastObservedLedger: 1234567
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    executableType: WASM
+    evidence:
+      - ev_wasm_alpha
+      - ev_deployment_alpha
+  wasm:
+    hash: *wasmA
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    sizeBytes: 48123
+    sourceRepository: https://example.invalid/amasario/alpha-contract
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    buildConfiguration: &buildCfg
+      algorithm: sha256
+      value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    reproducible: REPRODUCED
+    evidence:
+      - ev_wasm_alpha
+      - ev_artifact_wasm
+  source:
+    repositoryUrl: https://example.invalid/amasario/alpha-contract
+    repositoryName: alpha-contract
+    revision: 5516af291249414332282f5b6655c9033f73e3fc
+    ref:
+      type: tag
+      name: v1.0.0
+    artifactDigest:
+      algorithm: sha256
+      value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    timestamp: '2026-01-10T09:00:00Z'
+    buildRelationship: BUILT_BY_DECLARED_BUILD
+    evidence:
+      - ev_source_revision
+  build:
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    toolchain:
+      name: rustc
+      version: 1.84.0
+      target: wasm32-unknown-unknown
+      components:
+        - cargo
+    configuration:
+      digest: *buildCfg
+      profile: release
+      flags:
+        - opt-level=z
+        - lto=true
+    lockfile:
+      id: artifact_lockfile
+      type: LOCKFILE
+      digest:
+        algorithm: sha256
+        value: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+      evidence:
+        - ev_lockfile
+    target: WASM
+    artifact:
+      id: artifact_wasm_alpha
+      type: WASM
+      digest: *wasmA
+      reproducible: REPRODUCED
+      evidence:
+        - ev_artifact_wasm
+    artifactDigest: *wasmA
+    reproducibility: REPRODUCED
+    evidence:
+      - ev_build_config
+  artifacts:
+    - id: artifact_source_archive
+      type: SOURCE_ARCHIVE
+      digest:
+        algorithm: sha256
+        value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+      derived:
+        - artifact_wasm_alpha
+      evidence:
+        - ev_source_revision
+    - id: artifact_lockfile
+      type: LOCKFILE
+      digest:
+        algorithm: sha256
+        value: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+      evidence:
+        - ev_lockfile
+    - id: artifact_wasm_alpha
+      type: WASM
+      digest: *wasmA
+      sizeBytes: 48123
+      mediaType: application/wasm
+      inputs:
+        - id: artifact_source_archive
+          type: SOURCE_ARCHIVE
+          derivation: BUILT_FROM
+        - id: artifact_lockfile
+          type: LOCKFILE
+          derivation: BUILT_FROM
+      reproducible: REPRODUCED
+      evidence:
+        - ev_artifact_wasm
+  deployment:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: *net
+    status: CONFIRMED
+    transaction:
+      hash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      network: *net
+      ledger: 1234567
+      successful: true
+      operationCount: 1
+      closeTime: '2026-01-12T08:30:00Z'
+    ledger: 1234567
+    operation: 0
+    wasmHash: *wasmA
+    deploymentArtifact:
+      id: artifact_deployment_alpha
+      type: DEPLOYMENT_ARTIFACT
+      digest: *wasmA
+      evidence:
+        - ev_deployment_alpha
+    evidence:
+      - ev_deployment_alpha
+      - ev_transaction_deploy
+  evidence:
+    - id: ev_source_revision
+      type: SOURCE
+      claim: The source revision 5516af291249414332282f5b6655c9033f73e3fc of alpha-contract corresponds to the archive digest 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a.
+      observedAt: '2026-01-12T09:00:00Z'
+      repository: https://example.invalid/amasario/alpha-contract
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+      digest:
+        algorithm: sha256
+        value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    - id: ev_build_config
+      type: BUILD
+      claim: The build of artifact_wasm_alpha used toolchain rustc 1.84.0 with configuration digest 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757.
+      observedAt: '2026-01-12T09:05:00Z'
+      toolchain: rustc 1.84.0
+      configurationDigest: *buildCfg
+    - id: ev_lockfile
+      type: ARTIFACT
+      claim: The lockfile resolved the dependency set and has digest a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f.
+      observedAt: '2026-01-12T09:05:00Z'
+      artifactType: LOCKFILE
+      digest:
+        algorithm: sha256
+        value: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+    - id: ev_artifact_wasm
+      type: ARTIFACT
+      claim: The build produced a WASM artifact with digest 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3.
+      observedAt: '2026-01-12T09:05:00Z'
+      artifactType: WASM
+      digest: *wasmA
+    - id: ev_wasm_alpha
+      type: WASM
+      claim: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB hosts an executable with sha256 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 at ledger 1234567.
+      observedAt: '2026-01-12T10:00:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      digest: *wasmA
+      boundary:
+        network: *net
+        ledger: 1234567
+        observedAt: '2026-01-12T10:00:00Z'
+    - id: ev_transaction_deploy
+      type: TRANSACTION
+      claim: The transaction 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712 succeeded at ledger 1234567.
+      observedAt: '2026-01-12T10:00:00Z'
+      transactionHash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      ledger: 1234567
+      successful: true
+      boundary:
+        network: *net
+        ledger: 1234567
+        observedAt: '2026-01-12T10:00:00Z'
+    - id: ev_deployment_alpha
+      type: DEPLOYMENT
+      claim: The executable 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 became the contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB at ledger 1234567.
+      observedAt: '2026-01-12T10:00:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      transactionHash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      ledger: 1234567
+      boundary:
+        network: *net
+        ledger: 1234567
+        observedAt: '2026-01-12T10:00:00Z'
+  confidence:
+    level: VERIFIED
+    evidence:
+      - ev_source_revision
+      - ev_build_config
+      - ev_artifact_wasm
+      - ev_wasm_alpha
+      - ev_deployment_alpha
+      - ev_transaction_deploy
+    rationale: The deployed executable hash matches the digest of an artifact produced from a named source revision and a recorded build configuration, and the deployment is confirmed by a successful transaction.
+  verificationStatus: VERIFIED
+  boundary:
+    network: *net
+    ledger: 1234567
+    observedAt: '2026-01-12T10:00:00Z'
