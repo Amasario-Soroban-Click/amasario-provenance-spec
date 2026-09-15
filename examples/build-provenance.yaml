@@ -1,0 +1,60 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: build-provenance
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/build.schema.json
+description: >
+  A build record precise enough to be re-run: exact toolchain version and target, a
+  configuration recorded both as resolvable values and as a digest over the whole, the
+  lockfile that determines what was actually compiled, and the produced artifact. The
+  reproducibility field is NOT_ATTEMPTED rather than NOT_REPRODUCED, because nobody
+  tried, and reporting an untried build as non-reproducible would be a false negative.
+document:
+  sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+  toolchain:
+    name: rustc
+    version: 1.84.0
+    target: wasm32-unknown-unknown
+    components:
+      - cargo
+      - rust-std
+  configuration:
+    digest:
+      algorithm: sha256
+      value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+    profile: release
+    flags:
+      - opt-level=z
+      - lto=true
+      - panic=abort
+    environment:
+      SOURCE_DATE_EPOCH: '1767225600'
+      CARGO_TERM_COLOR: never
+  lockfile:
+    id: artifact_lockfile
+    type: LOCKFILE
+    digest:
+      algorithm: sha256
+      value: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+    evidence:
+      - ev_lockfile
+  target: WASM
+  artifact:
+    id: artifact_wasm_alpha
+    type: WASM
+    digest:
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    sizeBytes: 48123
+    mediaType: application/wasm
+    evidence:
+      - ev_artifact_wasm
+  artifactDigest:
+    algorithm: sha256
+    value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+  reproducibility: NOT_ATTEMPTED
+  evidence:
+    - ev_build_config
+    - ev_lockfile
+    - ev_artifact_wasm

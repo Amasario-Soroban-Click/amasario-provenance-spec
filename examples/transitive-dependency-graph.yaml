@@ -1,0 +1,134 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: transitive-dependency-graph
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/graph.schema.json
+description: >
+  A typed graph spanning build provenance and runtime invocation, with a cycle and a
+  disconnected node. The disconnected node is reported rather than omitted: it was
+  discovered as a contract address stored by the root contract, but no relationship
+  could be established to it, which is a finding about the limit of the analysis.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  id: graph_alpha
+  nodes:
+    - id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      kind: CONTRACT
+      label: alpha
+      attributes:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        networkId: testnet
+    - id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      kind: CONTRACT
+      label: beta
+      attributes:
+        contractId: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+        networkId: testnet
+    - id: artifact_wasm_alpha
+      kind: WASM
+      label: alpha executable
+      digest:
+        algorithm: sha256
+        value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    - id: build_alpha_v1
+      kind: BUILD
+      label: alpha release build
+      attributes:
+        version: 1.84.0
+    - id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+      kind: SOURCE
+      label: alpha-contract@v1.0.0
+      attributes:
+        revision: 5516af291249414332282f5b6655c9033f73e3fc
+    - id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      kind: CONTRACT
+      label: gamma
+      attributes:
+        contractId: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+        networkId: testnet
+        external: false
+  edges:
+    - id: edge_wasm_build
+      source: artifact_wasm_alpha
+      target: build_alpha_v1
+      relationship: DERIVED_FROM
+      evidence:
+        - ev_artifact_wasm
+      confidence:
+        level: VERIFIED
+        evidence:
+          - ev_artifact_wasm
+      observed: true
+    - id: edge_build_source
+      source: build_alpha_v1
+      target: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+      relationship: BUILT_FROM
+      evidence:
+        - ev_source_revision
+      confidence:
+        level: VERIFIED
+        evidence:
+          - ev_source_revision
+      observed: true
+    - id: edge_alpha_wasm
+      source: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target: artifact_wasm_alpha
+      relationship: DEPLOYED_AS
+      evidence:
+        - ev_deployment_alpha
+      confidence:
+        level: VERIFIED
+        evidence:
+          - ev_deployment_alpha
+      observed: true
+    - id: edge_alpha_beta
+      source: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+      observed: true
+    - id: edge_beta_gamma
+      source: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      relationship: INVOCATES
+      evidence:
+        - ev_invocation_beta_gamma
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_beta_gamma
+      observed: true
+    - id: edge_gamma_beta
+      source: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      target: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      evidence:
+        - ev_invocation_gamma_beta
+      confidence:
+        level: MEDIUM_CONFIDENCE
+        evidence:
+          - ev_invocation_gamma_beta
+      observed: true
+  metadata:
+    directed: true
+    cyclic: true
+    nodeCount: 6
+    edgeCount: 6
+    maxDepth: 4
+    truncated: false
+    disconnectedNodes: []
+  boundary:
+    network:
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+    ledger: 1234789
+    observedAt: '2026-01-15T13:00:00Z'

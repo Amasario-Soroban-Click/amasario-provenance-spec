@@ -1,0 +1,82 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: contract-with-dependencies
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/dependency-set.schema.json
+description: >
+  A dependency set for one contract, containing a declared package dependency, an
+  observed contract dependency and an explicit unresolved lookup. The three are kept
+  visibly distinct: the package dependency is declared rather than resolved, the
+  contract dependency is observed, and the lookup failure is recorded as unresolved
+  rather than silently producing a contract that looks self-contained.
+document:
+  id: depset_alpha_full
+  edges:
+    - id: edge_alpha_crate
+      source:
+        kind: BUILD
+        id: build_alpha_v1
+      target:
+        kind: PACKAGE
+        id: crate:soroban-sdk@22.0.0
+      relationship: DEPENDS_ON
+      dependencyClass: PACKAGE
+      basis: DECLARED_MANIFEST
+      evidence:
+        - ev_manifest_declaration
+      confidence:
+        level: MEDIUM_CONFIDENCE
+        evidence:
+          - ev_manifest_declaration
+        rationale: The dependency is declared in the manifest but no lockfile was available, so the resolved version is not established.
+      observed: false
+      verificationStatus: PARTIALLY_VERIFIED
+      metadata:
+        manifest: Cargo.toml
+        declaredRequirement: '>=22.0.0, <23.0.0'
+    - id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      dependencyClass: CONTRACT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+        networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      observed: true
+      verificationStatus: VERIFIED
+  direct:
+    - edge_alpha_crate
+    - edge_alpha_beta
+  transitive: []
+  maxDepth: 2
+  truncated: true
+  truncationReason: RATE_LIMITED
+  unresolved:
+    - source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      reason: NETWORK_ERROR
+      detail: The endpoint returned a rate-limit response while enumerating events for the remaining ledger range, so further invocations were not examined. The failure is recorded as a resolution failure, and the bound it placed on the analysis is recorded separately as a truncation.
+  boundary:
+    network:
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    ledger: 1234789
+    observedAt: '2026-01-15T13:00:00Z'

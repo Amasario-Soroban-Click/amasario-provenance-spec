@@ -1,0 +1,108 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact-analysis
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/report.schema.json
+description: >
+  An impact analysis presented as a report. The example demonstrates the separation
+  the report schema enforces: what was observed, what was inferred, what was verified
+  and what could not be answered are four different sections, and the unanswerable
+  question is reported as unknown with its reason rather than omitted. The disclaimer
+  is present because a report must not read as a security assessment.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  target:
+    kind: SOURCE
+    id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+  boundary:
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    ledger: 1234900
+    observedAt: '2026-01-16T09:20:00Z'
+  sections:
+    observedFacts:
+      - statement: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB hosts an executable whose sha256 is 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3.
+        entity:
+          kind: WASM
+          id: artifact_wasm_alpha
+        evidence:
+          - ev_wasm_observed
+        confidence:
+          level: VERIFIED
+          evidence:
+            - ev_wasm_observed
+      - statement: The contract CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I was invoked by C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB in a transaction recorded as successful.
+        entity:
+          kind: CONTRACT
+          id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+        evidence:
+          - ev_invocation_alpha_beta
+        confidence:
+          level: HIGH_CONFIDENCE
+          evidence:
+            - ev_invocation_alpha_beta
+    inferredRelationships:
+      - statement: The deployed executable at C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB was derived from the build artifact artifact_wasm_alpha.
+        entity:
+          kind: WASM
+          id: artifact_wasm_alpha
+        evidence:
+          - ev_artifact_wasm
+        confidence:
+          level: MEDIUM_CONFIDENCE
+          evidence:
+            - ev_artifact_wasm
+        inferenceBasis: The digest recorded for the build artifact equals the executable hash reported by the network, so the two are the same content. The derivation itself was not observed directly.
+    verification:
+      - subject:
+          kind: WASM
+          id: artifact_wasm_alpha
+        status: VERIFIED
+        detail: The deployed executable hash equals the digest of the recorded build artifact.
+        evidence:
+          - ev_wasm_observed
+          - ev_artifact_wasm
+      - subject:
+          kind: BUILD
+          id: build_alpha_v1
+        status: PARTIALLY_VERIFIED
+        detail: The build record names its source revision and configuration, but no independent rebuild exists for this version.
+        evidence:
+          - ev_build_config
+    confidence:
+      - subject:
+          kind: SOURCE
+          id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+        confidence:
+          level: MEDIUM_CONFIDENCE
+          evidence:
+            - ev_source_revision
+          rationale: The revision is claimed and the archive digest is recorded, but the revision was resolved through a branch rather than a tag.
+    unknown:
+      - question: Which contracts depend on the executable deployed at C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB?
+        reason: OUT_OF_BOUNDARY
+        detail: Establishing dependents requires enumerating historic invocations across the whole network, which this analysis did not attempt. The absence of dependents in this report is an absence of observation.
+      - question: Does the built artifact reproduce from the recorded source revision?
+        reason: EVIDENCE_UNAVAILABLE
+        detail: No independent rebuild was performed, so the reproducibility question is unanswered rather than answered negatively.
+    errors: []
+  relationshipFindings:
+    - relationship: INVOCATES
+      edgeId: edge_alpha_beta
+      explanation: The invocation appears in a successful transaction whose caller and callee contracts are both identified in the invocation record, so the relationship is recorded as observed rather than inferred.
+      observationallySupported: true
+    - relationship: DERIVED_FROM
+      edgeId: edge_wasm_build_artifact
+      explanation: The derivation is supported by a digest equality between the deployed executable and the recorded build artifact, which is evidence of the same content rather than an observation of the derivation step.
+      observationallySupported: false
+  disclaimers:
+    - Amasario reports dependency, provenance and impact relationships. It does not determine whether a contract is secure, safe, malicious or free of vulnerabilities, and no statement in this report constitutes such a determination.
+    - This report describes what was observed within the stated ledger boundary. Relationships outside that boundary were not examined and are not absent.
+  truncated: false
+  generatedAt: '2026-01-16T09:25:00Z'

@@ -1,0 +1,249 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: complete-project
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/snapshot.schema.json
+description: >
+  A complete snapshot tying together everything the specification models for one
+  contract: identity, executable identity, provenance, dependencies, graph, evidence,
+  confidence, impact and a declared volatile-field list for the content digest. It is
+  the reference for what a full analysis produces, and it deliberately repeats the
+  network and ledger boundary at the top level so the snapshot is self-describing while
+  a rule keeps the repetition consistent with the boundary object.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  id: snapshot_alpha_1234900
+  capturedAt: '2026-01-16T09:30:00Z'
+  boundary:
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    ledger: 1234900
+    observedAt: '2026-01-16T09:30:00Z'
+  network: *net
+  ledgerBoundary: 1234900
+  contract:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: *net
+    identityVersion: 1
+    wasmHash: &wasmA
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    ledgerSequence: 1234567
+    firstObservedLedger: 1234500
+    lastObservedLedger: 1234900
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    executableType: WASM
+    evidence:
+      - ev_wasm_observed
+      - ev_deployment_alpha
+  wasm:
+    hash: *wasmA
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    sourceRepository: https://example.invalid/amasario/alpha-contract
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    reproducible: NOT_ATTEMPTED
+    evidence:
+      - ev_wasm_observed
+      - ev_artifact_wasm
+  dependencies:
+    id: depset_alpha_snapshot
+    edges:
+      - id: edge_alpha_beta
+        source:
+          kind: CONTRACT
+          id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        target:
+          kind: CONTRACT
+          id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+        relationship: INVOCATES
+        dependencyClass: CONTRACT
+        basis: OBSERVED_INVOCATION
+        evidence:
+          - ev_invocation_alpha_beta
+        confidence:
+          level: HIGH_CONFIDENCE
+          evidence:
+            - ev_invocation_alpha_beta
+        network: *net
+        observed: true
+        verificationStatus: VERIFIED
+    direct:
+      - edge_alpha_beta
+    transitive: []
+    maxDepth: 2
+    truncated: false
+    boundary:
+      network: *net
+      ledger: 1234900
+      observedAt: '2026-01-16T09:30:00Z'
+  graph:
+    apiVersion: amasario.dev/v1
+    specVersion: 1.0.0
+    id: graph_alpha_snapshot
+    nodes:
+      - id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        kind: CONTRACT
+        label: alpha
+      - id: artifact_wasm_alpha
+        kind: WASM
+        label: alpha executable
+      - id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+        kind: CONTRACT
+        label: beta
+    edges:
+      - id: edge_alpha_wasm
+        source: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        target: artifact_wasm_alpha
+        relationship: DEPLOYED_AS
+        evidence:
+          - ev_deployment_alpha
+        confidence:
+          level: VERIFIED
+          evidence:
+            - ev_deployment_alpha
+        observed: true
+      - id: edge_alpha_beta
+        source: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        target: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+        relationship: INVOCATES
+        evidence:
+          - ev_invocation_alpha_beta
+        confidence:
+          level: HIGH_CONFIDENCE
+          evidence:
+            - ev_invocation_alpha_beta
+        observed: true
+    metadata:
+      directed: true
+      cyclic: false
+      nodeCount: 3
+      edgeCount: 2
+      truncated: false
+      disconnectedNodes: []
+    boundary:
+      network: *net
+      ledger: 1234900
+      observedAt: '2026-01-16T09:30:00Z'
+  evidence:
+    - id: ev_wasm_observed
+      type: WASM
+      claim: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB hosts an executable with sha256 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 at ledger 1234900.
+      observedAt: '2026-01-16T09:30:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      digest: *wasmA
+      boundary:
+        network: *net
+        ledger: 1234900
+        observedAt: '2026-01-16T09:30:00Z'
+    - id: ev_deployment_alpha
+      type: DEPLOYMENT
+      claim: The executable 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 became the contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB at ledger 1234567.
+      observedAt: '2026-01-16T09:30:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      transactionHash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      ledger: 1234567
+      boundary:
+        network: *net
+        ledger: 1234900
+        observedAt: '2026-01-16T09:30:00Z'
+    - id: ev_artifact_wasm
+      type: ARTIFACT
+      claim: A build artifact with digest 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 was recorded for the claimed source revision.
+      observedAt: '2026-01-16T09:30:00Z'
+      artifactType: WASM
+      digest: *wasmA
+    - id: ev_invocation_alpha_beta
+      type: TRANSACTION
+      claim: The transaction 4efa468e74dfdf0da16d38875757f3cd484fc25206c628c8439ed5c0913a6cfd succeeded at ledger 1234602 and invoked the contract CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I from C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB.
+      observedAt: '2026-01-16T09:30:00Z'
+      transactionHash: 4efa468e74dfdf0da16d38875757f3cd484fc25206c628c8439ed5c0913a6cfd
+      ledger: 1234602
+      successful: true
+      boundary:
+        network: *net
+        ledger: 1234900
+        observedAt: '2026-01-16T09:30:00Z'
+  confidence:
+    level: HIGH_CONFIDENCE
+    evidence:
+      - ev_wasm_observed
+      - ev_deployment_alpha
+      - ev_invocation_alpha_beta
+    rationale: The executable identity and its deployment are established from network observations, but no source or build linkage was verified, so the snapshot's overall level is below VERIFIED.
+  impact:
+    - id: impact_alpha_executable_contract_beta
+      changedEntity:
+        kind: WASM
+        id: artifact_wasm_alpha
+        digest: *wasmA
+      affectedEntity:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      impactType:
+        - DIRECT
+        - CONTRACT
+      hopDepth: 1
+      path:
+        nodes:
+          - kind: WASM
+            id: artifact_wasm_alpha
+          - kind: CONTRACT
+            id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        steps:
+          - source:
+              kind: CONTRACT
+              id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+            target:
+              kind: WASM
+              id: artifact_wasm_alpha
+            relationship: DEPLOYED_AS
+            edgeId: edge_alpha_wasm
+            direction: inverted
+            evidence:
+              - ev_deployment_alpha
+            confidence:
+              level: VERIFIED
+              evidence:
+                - ev_deployment_alpha
+        hopDepth: 1
+        direction: DEPENDENTS
+        termination: TARGET_REACHED
+        confidence:
+          level: VERIFIED
+          evidence:
+            - ev_deployment_alpha
+      relationshipTypes:
+        - DEPLOYED_AS
+      direction: DEPENDENTS
+      changeType: REPLACED
+      evidence:
+        - ev_wasm_observed
+        - ev_deployment_alpha
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_wasm_observed
+          - ev_deployment_alpha
+        rationale: The contract is related to the executable by an observed deployment, so a change to the executable reaches the contract that hosts it.
+      reason: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB is DEPLOYED_AS the executable artifact_wasm_alpha, so replacing that executable changes what the contract hosts.
+      verificationState: PARTIALLY_VERIFIED
+      boundary:
+        network: *net
+        ledger: 1234900
+        observedAt: '2026-01-16T09:30:00Z'
+      truncated: false
+  engineVersion: 0.1.0
+  contentDigest:
+    algorithm: sha256
+    value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+  volatileFields:
+    - /capturedAt
+    - /engineVersion
+  truncated: false

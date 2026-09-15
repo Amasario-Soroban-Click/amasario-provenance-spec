@@ -1,0 +1,171 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: verified-contract
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+description: >
+  A provenance chain that reaches VERIFIED and includes an attestation. The
+  attestation is scoped: it attests that a build reproduced, and its
+  scopeLimitations state that it says nothing about contract behaviour. The example
+  is included precisely to show that a VERIFIED provenance status rests on digest
+  agreement, not on the attestation, so the attestation could be removed without
+  changing the verification status.
+document:
+  apiVersion: amasario.dev/v1
+  specVersion: 1.0.0
+  contract:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: &net
+      id: testnet
+      type: TESTNET
+      passphrase: 'Test SDF Network ; September 2015'
+      networkId: cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472
+      rpcUrl: https://soroban-testnet.stellar.org
+    identityVersion: 1
+    wasmHash: &wasmA
+      algorithm: sha256
+      value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    deploymentTransaction: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+    executableType: WASM
+    evidence:
+      - ev_wasm_alpha
+      - ev_deployment_alpha
+  wasm:
+    hash: *wasmA
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    sourceRepository: https://example.invalid/amasario/alpha-contract
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    reproducible: REPRODUCED
+    evidence:
+      - ev_wasm_alpha
+      - ev_artifact_wasm
+      - ev_attestation_rebuild
+  source:
+    repositoryUrl: https://example.invalid/amasario/alpha-contract
+    revision: 5516af291249414332282f5b6655c9033f73e3fc
+    ref:
+      type: tag
+      name: v1.0.0
+    artifactDigest:
+      algorithm: sha256
+      value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    buildRelationship: BUILT_BY_DECLARED_BUILD
+    evidence:
+      - ev_source_revision
+  build:
+    sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+    toolchain:
+      name: rustc
+      version: 1.84.0
+      target: wasm32-unknown-unknown
+    configuration:
+      digest:
+        algorithm: sha256
+        value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+      profile: release
+    artifact:
+      id: artifact_wasm_alpha
+      type: WASM
+      digest: *wasmA
+      reproducible: REPRODUCED
+      evidence:
+        - ev_artifact_wasm
+    artifactDigest: *wasmA
+    reproducibility: REPRODUCED_BY_THIRD_PARTY
+    attestations:
+      - attestation_rebuild_alpha
+    evidence:
+      - ev_build_config
+      - ev_attestation_rebuild
+  deployment:
+    contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    network: *net
+    status: CONFIRMED
+    ledger: 1234567
+    operation: 0
+    wasmHash: *wasmA
+    evidence:
+      - ev_deployment_alpha
+  attestations:
+    - id: attestation_rebuild_alpha
+      issuer:
+        name: Independent Rebuild Service (illustrative)
+        url: https://example.invalid/rebuild-service
+        publicKey: 3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29
+      subject:
+        kind: BUILD
+        id: build_alpha_v1
+      claim: Rebuilding the revision 5516af291249414332282f5b6655c9033f73e3fc of alpha-contract with rustc 1.84.0 and the recorded release configuration produced a WASM module whose sha256 is 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3.
+      method: INDEPENDENT_REBUILD
+      issuedAt: '2026-01-13T11:00:00Z'
+      expiresAt: '2027-01-13T11:00:00Z'
+      verificationStatus: VERIFIED
+      verificationNote: The rebuild was performed independently and its output digest was compared against the recorded artifact digest at the stated boundary.
+      scopeLimitations:
+        - This attestation covers build reproducibility only. It makes no statement about the behaviour, correctness, safety or vulnerability status of the resulting contract.
+        - This attestation does not cover any revision other than the one stated.
+  evidence:
+    - id: ev_source_revision
+      type: SOURCE
+      claim: The revision 5516af291249414332282f5b6655c9033f73e3fc of alpha-contract matches the archive digest 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a.
+      observedAt: '2026-01-13T09:00:00Z'
+      repository: https://example.invalid/amasario/alpha-contract
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+      digest:
+        algorithm: sha256
+        value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    - id: ev_build_config
+      type: BUILD
+      claim: The artifact was built with rustc 1.84.0 for wasm32-unknown-unknown under configuration digest 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757.
+      observedAt: '2026-01-13T09:05:00Z'
+      toolchain: rustc 1.84.0
+      configurationDigest:
+        algorithm: sha256
+        value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+    - id: ev_artifact_wasm
+      type: ARTIFACT
+      claim: The build produced a WASM artifact with digest 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3.
+      observedAt: '2026-01-13T09:05:00Z'
+      artifactType: WASM
+      digest: *wasmA
+    - id: ev_wasm_alpha
+      type: WASM
+      claim: The contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB hosts an executable with sha256 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 at ledger 1234789.
+      observedAt: '2026-01-15T12:00:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      digest: *wasmA
+      boundary:
+        network: *net
+        ledger: 1234789
+        observedAt: '2026-01-15T12:00:00Z'
+    - id: ev_deployment_alpha
+      type: DEPLOYMENT
+      claim: The executable 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3 became the contract C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB at ledger 1234567.
+      observedAt: '2026-01-15T12:00:00Z'
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      transactionHash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      ledger: 1234567
+      boundary:
+        network: *net
+        ledger: 1234789
+        observedAt: '2026-01-15T12:00:00Z'
+    - id: ev_attestation_rebuild
+      type: ATTESTATION
+      claim: An independent rebuild service attested that rebuilding the stated revision with the stated toolchain reproduced the deployed executable digest.
+      observedAt: '2026-01-15T12:10:00Z'
+      attestationId: attestation_rebuild_alpha
+  confidence:
+    level: VERIFIED
+    evidence:
+      - ev_source_revision
+      - ev_build_config
+      - ev_artifact_wasm
+      - ev_wasm_alpha
+      - ev_deployment_alpha
+    rationale: The deployed executable digest equals the digest of an artifact produced from a named revision under a recorded configuration, and the deployment is confirmed by an observed deployment record.
+  verificationStatus: VERIFIED
+  boundary:
+    network: *net
+    ledger: 1234789
+    observedAt: '2026-01-15T12:10:00Z'
