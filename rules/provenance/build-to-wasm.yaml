@@ -1,0 +1,43 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: provenance
+file: build-to-wasm
+rules:
+  - id: provenance/build-to-wasm
+    title: A build-to-executable link is established by digest equality or not at all
+    severity: MUST
+    statement: >
+      The correspondence between a build artifact and a deployed executable MUST be
+      established by comparing their digests. A build MUST NOT be recorded as producing
+      an executable when the digests differ, and differing digests MUST be reported as
+      CONFLICTING rather than as PARTIALLY_VERIFIED. Where a digest comparison cannot
+      be performed because one side is unavailable, the correspondence MUST be recorded
+      as unestablished.
+    rationale: >
+      Digest equality is the only check in this chain that a consumer can re-perform
+      without trusting Amasario, or the producer, or the network endpoint. It is
+      therefore the one place where an implementation is not permitted to fall back on
+      an inference. Collapsing a mismatch into PARTIALLY_VERIFIED would be the most
+      damaging single output the specification could produce, because it would report
+      an actively contradicted chain as merely incomplete.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/build.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/artifact.schema.json
+      - kind: model
+        id: provenance/build
+      - kind: model
+        id: provenance/artifact
+    fixtures:
+      - provenance/verified-build
+      - provenance/mismatched-wasm
+    examples:
+      - build-provenance
+      - verified-contract
+    checks:
+      - The verified-build fixture's build artifact digest equals the deployed executable hash.
+      - The mismatched fixture's build artifact digest differs from the deployed executable hash and is reported CONFLICTING.
+      - A confidence object carrying contradictingEvidence cannot report VERIFIED.
+    nonGoals:
+      - This rule does not require a build to be reproducible. It requires that a non-matching digest never be presented as a match.

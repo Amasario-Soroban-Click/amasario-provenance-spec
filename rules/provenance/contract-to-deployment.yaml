@@ -1,0 +1,72 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: provenance
+file: contract-to-deployment
+rules:
+  - id: provenance/contract-to-deployment
+    title: A deployment is confirmed only from a successful transaction and an observation
+    severity: MUST
+    statement: >
+      A deployment record MUST name its contract, network and status. Its status MUST
+      be CONFIRMED only when the deployment transaction is recorded as successful and
+      the resulting contract is observed on the network at the stated boundary. A
+      transaction recorded as unsuccessful MUST NOT support CONFIRMED, an unknown
+      outcome MUST be recorded as UNCONFIRMED rather than FAILED, and a record that
+      names a transaction MUST also name its ledger. A network descriptor MUST declare
+      the passphrase of the network it identifies.
+    rationale: >
+      Deployment status is the field an operator is most likely to act on, and it is
+      the one where a plausible-sounding default does the most damage. Treating an
+      unconfirmed deployment as failed would cause a redundant and potentially
+      destructive redeployment; treating a failed one as confirmed would cause an
+      operator to believe a contract is live when the chain never took effect. The
+      ledger requirement exists because a transaction hash alone cannot be located
+      again after a network reset without knowing where to look.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/deployment.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/network.schema.json
+      - kind: model
+        id: provenance/deployment
+    fixtures:
+      - provenance/verified-build
+      - minimal/provenance
+      - invalid/malformed-contract
+    examples:
+      - deployment-provenance
+    checks:
+      - A deployment without contractId, network or status is rejected.
+      - A network descriptor without a passphrase is rejected.
+      - A transaction without a ledger or a success flag is rejected.
+      - The verified-build fixture records CONFIRMED only alongside a successful transaction.
+    nonGoals:
+      - This rule does not assert that a confirmed deployment is the current effective state of a contract beyond its boundary.
+
+  - id: provenance/snapshot-consistency
+    title: A snapshot's repeated boundary fields must agree with its observation boundary
+    severity: MUST
+    statement: >
+      A snapshot that repeats its network and ledger boundary at the top level MUST
+      have those fields equal the corresponding fields of its observation boundary. A
+      snapshot MUST declare the specification version that produced it, and MUST
+      declare which fields are excluded from its content digest.
+    rationale: >
+      The top-level repetition exists so that a snapshot is self-describing, which is
+      only safe if the repetition cannot drift. A snapshot whose top-level network
+      disagrees with its boundary network is worse than one that omits the field,
+      because a consumer reading the convenient field and a consumer reading the
+      authoritative one will reach different conclusions about the same document.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/snapshot.schema.json
+    fixtures:
+      - minimal/provenance
+    examples:
+      - complete-project
+    checks:
+      - A snapshot without a boundary, network, ledger boundary or content digest is rejected.
+      - The complete-project example's top-level network and ledger boundary equal its boundary's network and ledger.
+      - The complete-project example declares its volatile fields rather than leaving them implicit.
+    nonGoals:
+      - This rule does not prescribe which fields are volatile, only that the choice be declared and consistent.

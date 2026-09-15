@@ -1,0 +1,41 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: provenance
+file: wasm-to-contract
+rules:
+  - id: provenance/wasm-to-contract
+    title: The executable at an address must be observed, not assumed
+    severity: MUST
+    statement: >
+      The executable a contract hosts MUST be established from a network observation
+      that carries its observation boundary, and the contract identity MUST be
+      versioned so that a later change of executable is a new identity rather than a
+      contradiction. A document MUST NOT assume that the executable currently at an
+      address is the executable that was deployed there, and MUST record any observed
+      upgrade in the identity's upgrade history with its own evidence.
+    rationale: >
+      A contract address is a stable name for a mutable thing. An analysis that reads
+      the executable once and then reuses that value indefinitely will silently become
+      wrong at the next upgrade, and it will be wrong in the most dangerous direction:
+      it will report a verified provenance chain for an executable that is no longer
+      deployed. Versioning the identity is what makes the drift representable instead
+      of invisible.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/wasm.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/contract.schema.json
+      - kind: model
+        id: provenance/contract
+    fixtures:
+      - provenance/verified-build
+      - provenance/mismatched-wasm
+      - provenance/unknown-source
+    examples:
+      - complete-project
+    checks:
+      - A WASM evidence record without an observation boundary is rejected.
+      - An upgrade history entry requires its own evidence reference.
+      - The mismatched fixture records an identity version above one and an upgrade entry, so the changed executable is an upgrade rather than a contradiction of the original deployment.
+    nonGoals:
+      - This rule does not require an implementation to poll for upgrades. It requires that an executable observation be bound to the boundary at which it was made.

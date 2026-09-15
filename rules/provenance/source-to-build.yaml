@@ -1,0 +1,90 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+category: provenance
+file: source-to-build
+rules:
+  - id: provenance/source-to-build
+    title: A source-to-build claim must name its inputs and may not be rounded up
+    severity: MUST
+    statement: >
+      A build record MUST state the source revision it consumed, and a source revision
+      reached through a mutable ref MUST NOT be reported as VERIFIED. When a build
+      cannot record a toolchain identity, the provenance status MUST be
+      PARTIALLY_VERIFIED or lower, and the confidence MUST carry evidence for the
+      missing component rather than omitting it. When any evidence contradicts the
+      claim, the status MUST be CONFLICTING.
+    rationale: >
+      A branch can be moved after an analysis, so a revision resolved through one is
+      not stable enough to verify. More importantly, the failure mode this rule
+      prevents is rounding up: a chain whose toolchain is unknown is not nearly
+      verified, and one whose evidence disagrees with itself is not nearly verified
+      either. Both must be visibly weaker, because an operator acting on a provenance
+      status during an incident has no other signal.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/build.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/source.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/attestation.schema.json
+      - kind: model
+        id: provenance/build
+      - kind: model
+        id: provenance/source
+    fixtures:
+      - provenance/verified-build
+      - provenance/partial-build
+      - provenance/mismatched-wasm
+    examples:
+      - verified-contract
+      - build-provenance
+    checks:
+      - A build record without a sourceRevision is rejected.
+      - A floating toolchain version is rejected where an exact version is required.
+      - The partial-build fixture reports PARTIALLY_VERIFIED because the toolchain is unestablished.
+      - The mismatched fixture reports CONFLICTING with contradictingEvidence populated.
+      - An attestation used to support a claim above MEDIUM_CONFIDENCE carries a method and a verificationNote.
+    nonGoals:
+      - This rule does not require any build to be reproducible. It requires that an unestablished or contradicted chain be reported as such.
+
+  - id: provenance/evidence-traceability
+    title: Evidence must be traceable to the claim it supports
+    severity: MUST
+    statement: >
+      Every evidence record MUST state the specific claim it supports and MUST carry
+      the fields its class requires for that claim to be checkable. A claim MUST
+      reference at least one evidence record and MUST NOT rest on an evidence record
+      whose claim is broader than the claim being made. Evidence derived from a
+      transaction recorded as unsuccessful MUST NOT be cited as supporting the effect
+      that transaction attempted.
+    rationale: >
+      Evidence that cannot be traced to a claim is indistinguishable from an assertion
+      with a citation attached. Requiring the claim text means a reader can decide
+      whether the record actually bears on what is being asserted, which is impossible
+      when a record merely says "provenance". The transaction clause is the sharp edge:
+      a failed deployment transaction is genuine evidence that an attempt happened and
+      equally genuine evidence that the effect did not, and a model that cannot tell
+      them apart will eventually cite a failure as proof of success.
+    appliesTo:
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+      - kind: schema
+        id: https://amasario.dev/spec/v1/schema/report.schema.json
+      - kind: model
+        id: evidence/source
+      - kind: model
+        id: evidence/transaction
+    fixtures:
+      - minimal/provenance
+      - provenance/unknown-source
+      - invalid/invalid-provenance
+    examples:
+      - impact-analysis
+    checks:
+      - An evidence record without a claim is rejected.
+      - A TRANSACTION evidence record without a success flag is rejected.
+      - A confidence object with an empty evidence array is rejected.
+      - A report must carry at least one disclaimer, including the non-security-determination statement.
+      - The unknown-source fixture records an explicit OBSERVATION rather than omitting evidence for the absent source.
+    nonGoals:
+      - This rule does not require that evidence be independently reproducible, only that it be identified and scoped to a claim.
