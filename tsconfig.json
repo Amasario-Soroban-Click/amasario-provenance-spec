@@ -1,0 +1,36 @@
+{
+  // NodeNext + "type": "module" means every relative import must carry an explicit
+  // `.js` extension even though the source files are `.ts`. This is intentional: it
+  // keeps the sources runnable by `tsx` and by `node --experimental-strip-types`
+  // without a bundler, and keeps `tsc --noEmit` behaving exactly like Node's resolver.
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+
+    /* Strictness — the specification tooling must not be able to silently accept
+       malformed content because of a loose type. */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Module hygiene */
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    /* Validators are executed through tsx; tsc is used for type checking only. */
+    "noEmit": true
+  },
+  "include": ["scripts/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist", "coverage"]
+}

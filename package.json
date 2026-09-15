@@ -1,0 +1,67 @@
+{
+  "name": "@amasario/provenance-spec",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AMASARIO — normative, machine-readable specification for Soroban contract dependency, provenance and impact infrastructure.",
+  "keywords": [
+    "amasario",
+    "stellar",
+    "soroban",
+    "provenance",
+    "dependency-analysis",
+    "impact-analysis",
+    "specification"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "npm@11.19.0",
+  "homepage": "https://github.com/Amasario-Soroban-Click/amasario-provenance-spec",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amasario-Soroban-Click/amasario-provenance-spec.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Amasario-Soroban-Click/amasario-provenance-spec/issues"
+  },
+  "scripts": {
+    "validate:schemas": "tsx scripts/validate-schema.ts",
+    "validate:taxonomies": "tsx scripts/validate-taxonomies.ts",
+    "validate:models": "tsx scripts/validate-models.ts",
+    "validate:rules": "tsx scripts/validate-rules.ts",
+    "validate:fixtures": "tsx scripts/validate-fixtures.ts",
+    "validate:vectors": "tsx scripts/validate-vectors.ts",
+    "validate": "npm run validate:taxonomies && npm run validate:schemas && npm run validate:models && npm run validate:rules && npm run validate:fixtures && npm run validate:vectors",
+    "docs:generate": "tsx scripts/generate-docs.ts",
+    "docs:check": "tsx scripts/generate-docs.ts --check",
+    "release:check": "tsx scripts/release-check.ts",
+    "test": "vitest run tests",
+    "test:watch": "vitest tests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run validate && npm run docs:check && npm run test"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.1",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

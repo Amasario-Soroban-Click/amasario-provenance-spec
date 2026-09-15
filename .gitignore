@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test / coverage output
+coverage/
+.nyc_output/
+
+# Validation report artefacts written by scripts/*.ts when --report is used
+.amasario/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local environment
+.env
+.env.*
+!.env.example
+*.local
