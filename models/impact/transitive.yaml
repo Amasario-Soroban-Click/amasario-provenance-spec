@@ -1,0 +1,87 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/transitive
+name: Transitive Impact Model
+modelKind: finding
+concept: IMPACT_TRANSITIVE
+description: >
+  A finding in which a change reaches an entity through two or more hops. The model
+  exists because transitive findings are where impact analysis most easily becomes
+  untrustworthy: each extra hop multiplies the number of claims a reader would have
+  to check by hand, so the model requires the full path with per-step evidence and
+  fixes the confidence to the weakest step rather than the best.
+schema:
+  id: https://amasario.dev/spec/v1/schema/impact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Finding identifier, stable across runs.
+  - name: changedEntity
+    type: object
+    requirement: always
+    description: The entity that changed or is assumed to change.
+  - name: affectedEntity
+    type: object
+    requirement: always
+    description: The entity potentially affected.
+  - name: impactType
+    type: array
+    requirement: always
+    description: Classifications of the finding. For this model the set must include TRANSITIVE, and MULTI_HOP when the depth is three or more.
+  - name: hopDepth
+    type: integer
+    requirement: always
+    description: Number of edges between the entities. Two or more for this model.
+  - name: path
+    type: object
+    requirement: rule
+    description: The full path, with per-step evidence. Required by rule impact/transitive-impact, and the reason transitive findings stay auditable.
+  - name: relationshipTypes
+    type: array
+    requirement: optional
+    description: The relationships traversed, in path order. Must agree with the path.
+  - name: direction
+    type: string
+    requirement: optional
+    description: Which way the change propagated. Both directions may be followed in one analysis, which is why the field records which was used.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the finding as a whole, in addition to the per-step evidence the path must carry.
+  - name: confidence
+    type: object
+    requirement: always
+    description: Confidence for the whole finding, computed as the minimum ordinal across the steps.
+  - name: reason
+    type: string
+    requirement: always
+    description: Why the entity is considered affected, stated in terms of the traversed relationships.
+  - name: verificationState
+    type: string
+    requirement: optional
+    description: Whether the relationships relied upon were verified.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary the finding was computed at.
+  - name: truncated
+    type: boolean
+    requirement: optional
+    description: Whether propagation was bounded before exhaustion.
+relations:
+  - kind: AFFECTS
+    description: The relationship a transitive finding can be materialised as, with the path expressed through the underlying edges.
+taxonomies:
+  - impact-types
+  - confidence-levels
+  - relationship-types
+invariants:
+  - hopDepth must be at least 2, impactType must include TRANSITIVE, and MULTI_HOP must additionally be present when hopDepth is 3 or greater.
+  - Every step in the path must carry its own evidence.
+  - The aggregated confidence must be the minimum ordinal across the steps, so a transitive finding can never be stronger than its weakest hop.
+  - No step may traverse a relationship whose changePropagation is none.
+nonGoals:
+  - This model does not claim that all reachable entities are affected, only those the traversal found within the configured bound.
+  - This model does not claim to have found every path between the entities, and does not enumerate alternative paths as if it had.

@@ -1,0 +1,85 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/affected-deployment
+name: Affected Deployment Model
+modelKind: finding
+concept: IMPACT_AFFECTED_DEPLOYMENT
+description: >
+  A finding whose affected entity is a deployment record rather than a contract
+  identity. The distinction matters operationally: a deployment finding says that
+  what currently sits at an address no longer matches the state the analysis was
+  computed against, whereas a contract finding says that a contract is in the blast
+  radius. Different remediation follows, so conflating them would make the output
+  unusable for the workflow it exists to support.
+schema:
+  id: https://amasario.dev/spec/v1/schema/impact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Finding identifier, stable across runs.
+  - name: changedEntity
+    type: object
+    requirement: always
+    description: The entity that changed, typically a WASM or ARTIFACT entity.
+  - name: affectedEntity
+    type: object
+    requirement: always
+    description: The affected deployment record, identified by its contract and the ledger it was recorded at.
+  - name: impactType
+    type: array
+    requirement: always
+    description: Classifications of the finding. For this model the set must include DEPLOYMENT.
+  - name: hopDepth
+    type: integer
+    requirement: always
+    description: Number of edges between the entities.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the finding.
+  - name: confidence
+    type: object
+    requirement: always
+    description: Confidence for the finding.
+  - name: reason
+    type: string
+    requirement: always
+    description: Why the deployment is considered affected, stated in terms of the traversed relationships.
+  - name: path
+    type: object
+    requirement: rule
+    description: The path from the changed entity, typically a DEPLOYED_AS hop followed by further propagation. Required when hopDepth is greater than zero.
+  - name: direction
+    type: string
+    requirement: optional
+    description: Which way the change propagated. A change to the deployment propagates to the executable it hosts, not the reverse.
+  - name: verificationState
+    type: string
+    requirement: optional
+    description: Whether the relied-upon relationships were verified.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary the finding was computed at.
+  - name: truncated
+    type: boolean
+    requirement: optional
+    description: Whether propagation was bounded before exhaustion.
+relations:
+  - kind: DEPLOYED_AS
+    description: The relationship traversed, whose object_to_subject propagation is what carries a deployment change into the executable's dependents.
+  - kind: AFFECTS
+    description: The relationship used when deployment impact is asserted directly.
+taxonomies:
+  - impact-types
+  - deployment-statuses
+  - relationship-types
+invariants:
+  - impactType must include DEPLOYMENT when the affected entity is a deployment rather than a contract identity.
+  - A finding about a deployment must identify the ledger the deployment was recorded at, because a contract can be deployed to more than once.
+  - An UNCONFIRMED or FAILED deployment must not be reported as an affected deployment of a change, since no successful deployment is being affected.
+nonGoals:
+  - This model does not claim that a deployment should be rolled back, replaced or re-verified.
+  - This model does not assert that a deployment is currently the effective state of a contract beyond the observation boundary.

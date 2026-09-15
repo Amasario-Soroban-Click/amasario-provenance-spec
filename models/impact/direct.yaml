@@ -1,0 +1,81 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/direct
+name: Direct Impact Model
+modelKind: finding
+concept: IMPACT_DIRECT
+description: >
+  A finding in which a change to one entity reaches another in a single hop. One hop
+  is the depth at which a finding is easiest to check and easiest to overstate, so
+  the model requires the path, the evidence and a reason in terms of the traversed
+  relationship rather than a score.
+schema:
+  id: https://amasario.dev/spec/v1/schema/impact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Finding identifier, stable across runs so a diff can tell a new finding from a reordering.
+  - name: changedEntity
+    type: object
+    requirement: always
+    description: The entity that changed or is assumed to change.
+  - name: affectedEntity
+    type: object
+    requirement: always
+    description: The entity potentially affected.
+  - name: impactType
+    type: array
+    requirement: always
+    description: Classifications of the finding. For this model the set must include DIRECT.
+  - name: hopDepth
+    type: integer
+    requirement: always
+    description: Number of edges between the entities. Exactly 1 for this model.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the finding. Required and non-empty.
+  - name: confidence
+    type: object
+    requirement: always
+    description: Confidence, derived from the evidence.
+  - name: reason
+    type: string
+    requirement: always
+    description: Why the entity is considered affected, stated in terms of the relationship traversed. This is what replaces a score.
+  - name: path
+    type: object
+    requirement: rule
+    description: The path from changed to affected entity. Required by rule impact/direct-impact whenever hopDepth is greater than zero.
+  - name: relationshipTypes
+    type: array
+    requirement: optional
+    description: The relationships traversed, in path order.
+  - name: direction
+    type: string
+    requirement: optional
+    description: Which way the change propagated, derived from the relationship's changePropagation.
+  - name: verificationState
+    type: string
+    requirement: optional
+    description: Whether the relationships the finding relies on were themselves verified.
+  - name: truncated
+    type: boolean
+    requirement: optional
+    description: Whether propagation was bounded before exhaustion.
+relations:
+  - kind: AFFECTS
+    description: The relationship a direct impact finding can be materialised as in a graph.
+taxonomies:
+  - impact-types
+  - confidence-levels
+  - verification-statuses
+invariants:
+  - hopDepth must be exactly 1 and impactType must include DIRECT.
+  - The single traversed relationship must have a changePropagation of object_to_subject or subject_to_object. An impact finding must never rest on OBSERVED_IN or VERIFIED_BY, whose propagation is none.
+  - The reason must name the relationship traversed, so a reader can check the hop rather than trusting the depth.
+nonGoals:
+  - This model does not claim that the affected entity is broken. It claims that a change may affect it, with the reasoning shown.
+  - This model does not compute a severity or risk score.

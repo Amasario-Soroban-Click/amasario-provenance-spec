@@ -1,0 +1,86 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/affected-contract
+name: Affected Contract Model
+modelKind: finding
+concept: IMPACT_AFFECTED_CONTRACT
+description: >
+  A finding whose affected entity is a contract identity. The distinction this model
+  enforces is between a contract and the executable it hosts: a re-deployment changes
+  what an address runs without necessarily changing the artifact a consumer depends
+  on, and a dependency on a contract is a dependency on a mutable thing. Findings
+  about contracts therefore carry the identity version they were computed against.
+schema:
+  id: https://amasario.dev/spec/v1/schema/impact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Finding identifier, stable across runs.
+  - name: changedEntity
+    type: object
+    requirement: always
+    description: The entity that changed.
+  - name: affectedEntity
+    type: object
+    requirement: always
+    description: The affected contract identity. Its identity version is part of what the finding was computed against.
+  - name: impactType
+    type: array
+    requirement: always
+    description: Classifications of the finding. For this model the set must include CONTRACT.
+  - name: hopDepth
+    type: integer
+    requirement: always
+    description: Number of edges between the entities.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the finding.
+  - name: confidence
+    type: object
+    requirement: always
+    description: Confidence for the finding.
+  - name: reason
+    type: string
+    requirement: always
+    description: Why the contract is considered affected, stated in terms of the relationships traversed.
+  - name: path
+    type: object
+    requirement: rule
+    description: The path from the changed entity. Required when hopDepth is greater than zero.
+  - name: direction
+    type: string
+    requirement: optional
+    description: Which way the change propagated. A change to a contract propagates to its dependents, not to the contracts it depends on, unless an AFFECTS edge says otherwise.
+  - name: verificationState
+    type: string
+    requirement: optional
+    description: Whether the relied-upon relationships were verified.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary the finding was computed at.
+  - name: truncated
+    type: boolean
+    requirement: optional
+    description: Whether propagation was bounded before exhaustion.
+relations:
+  - kind: DEPENDS_ON
+    description: The relationship usually traversed in reverse to find affected contracts.
+  - kind: INVOCATES
+    description: The runtime relationship whose object is affected when a callee changes.
+  - kind: AFFECTS
+    description: The relationship used when impact is asserted directly rather than derived.
+taxonomies:
+  - impact-types
+  - relationship-types
+  - verification-statuses
+invariants:
+  - impactType must include CONTRACT whenever the affected entity's kind is CONTRACT.
+  - The finding must be computed against a specific contract identity version, because an address can host different executables over time.
+  - A contract that merely shares a network, operator or repository with the changed entity must not be reported as affected.
+nonGoals:
+  - This model does not claim that an affected contract will fail, only that a change may reach it.
+  - This model does not assess the affected contract's behaviour, correctness or safety.

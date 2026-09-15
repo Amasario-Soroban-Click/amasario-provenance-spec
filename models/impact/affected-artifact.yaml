@@ -1,0 +1,91 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/affected-artifact
+name: Affected Artifact Model
+modelKind: finding
+concept: IMPACT_AFFECTED_ARTIFACT
+description: >
+  A finding whose affected entity is an artifact or an executable. This is the impact
+  class that answers the question a consumer most needs before an upgrade: if a build
+  input or a source revision changes, which deployed executables no longer correspond
+  to their claimed provenance. It is deliberately about correspondence rather than
+  correctness, because a digest mismatch is a checkable fact and a broken contract is
+  not.
+schema:
+  id: https://amasario.dev/spec/v1/schema/impact.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Finding identifier, stable across runs.
+  - name: changedEntity
+    type: object
+    requirement: always
+    description: The entity that changed, typically a SOURCE, BUILD or ARTIFACT entity.
+  - name: affectedEntity
+    type: object
+    requirement: always
+    description: The affected artifact or executable, identified by digest.
+  - name: impactType
+    type: array
+    requirement: always
+    description: Classifications of the finding. For this model the set must include ARTIFACT when the affected entity is an ARTIFACT or WASM node.
+  - name: hopDepth
+    type: integer
+    requirement: always
+    description: Number of edges between the entities.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the finding.
+  - name: confidence
+    type: object
+    requirement: always
+    description: Confidence for the finding.
+  - name: reason
+    type: string
+    requirement: always
+    description: Why the artifact is considered affected, stated in terms of the traversed derivations.
+  - name: path
+    type: object
+    requirement: rule
+    description: The path from the changed entity. Required when hopDepth is greater than zero.
+  - name: direction
+    type: string
+    requirement: optional
+    description: Which way the change propagated.
+  - name: changeType
+    type: string
+    requirement: rule
+    description: The kind of change that triggered the finding. Required when impactType includes CHANGE.
+  - name: verificationState
+    type: string
+    requirement: optional
+    description: Whether the relied-upon relationships were verified.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary the finding was computed at.
+  - name: truncated
+    type: boolean
+    requirement: optional
+    description: Whether propagation was bounded before exhaustion.
+relations:
+  - kind: DERIVED_FROM
+    description: The relationship traversed in reverse, from an input to the outputs derived from it.
+  - kind: BUILT_FROM
+    description: The relationship traversed in reverse, from a source revision to the builds produced from it.
+  - kind: VERIFIED_BY
+    description: The relationship whose loss of correspondence is what the finding reports. It is never traversed for propagation, because verification is not a dependency.
+taxonomies:
+  - impact-types
+  - change-types
+  - artifact-types
+invariants:
+  - impactType must include ARTIFACT when the affected entity is an artifact or executable.
+  - changeType must be present when impactType includes CHANGE.
+  - The finding must not assert that an artifact is broken or invalid, only that it may no longer correspond to the provenance it was recorded with.
+nonGoals:
+  - This model does not claim that a changed input produced a different output. That requires the output's digest to be recomputed, which is a verification step rather than an impact step.
+  - This model does not rank artifacts by importance.
