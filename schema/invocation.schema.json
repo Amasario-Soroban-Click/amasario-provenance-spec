@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/invocation.schema.json",
+  "title": "Invocation",
+  "description": "An observed call into a contract. Invocations are how a runtime dependency between two contracts is established, which is why the caller is optional and the callee is not: a contract invoked directly by an account has an identifiable callee but no contract caller, and recording a fabricated caller for that case would create a dependency that does not exist.",
+  "type": "object",
+  "required": ["callee", "ledger", "transactionHash"],
+  "additionalProperties": false,
+  "properties": {
+    "caller": {
+      "description": "The contract that made the call, when the call was made by a contract rather than by an account or by the transaction itself. Absent means the caller was not a contract or was not observable.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "callerAccount": {
+      "description": "The account that originated the invocation chain, when the call originated from an account. Recorded only as an observation; not used as evidence of ownership.",
+      "type": "string",
+      "maxLength": 128
+    },
+    "callee": {
+      "description": "The contract that was called.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "function": {
+      "description": "The invoked function name, when it could be recovered from the invocation details. Absent means the function could not be determined, which is common for calls made through a host function whose arguments are not exposed as a named invocation.",
+      "type": "string",
+      "maxLength": 256
+    },
+    "ledger": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "transactionHash": {
+      "description": "The transaction whose execution performed this invocation.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operationIndex": {
+      "description": "The operation within the transaction that triggered this invocation.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "callDepth": {
+      "description": "The nesting depth of this invocation within its transaction, with 1 for a direct call. Recorded so that a reader can tell a direct dependency from one several frames deep without re-deriving the call tree.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "successful": {
+      "description": "Whether the invocation completed successfully, where the network record makes it determinable.",
+      "type": "boolean"
+    },
+    "argumentsDigest": {
+      "description": "A digest over the invocation arguments, without recording the arguments themselves. This lets two invocations be compared for equality without Amasario retaining potentially sensitive payloads.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "returnDigest": {
+      "description": "A digest over the returned value, where recording the value itself is undesirable.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "events": {
+      "description": "Event identifiers emitted by the callee during this invocation.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    }
+  }
+}

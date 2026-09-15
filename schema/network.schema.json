@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/network.schema.json",
+  "title": "Network",
+  "description": "A network environment an observation was made against. Two fields carry the identity: the Stellar network passphrase, which is the authoritative fact that identifies a Stellar network, and the Amasario network type, which groups environments by operational durability. They are recorded separately because they answer different questions, and because a private or forked network can share the public testnet passphrase while having entirely different retention.",
+  "type": "object",
+  "required": ["id", "type", "passphrase"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "A stable identifier for this network within the producing document.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "type": {
+      "description": "The Amasario network classification. This is an Amasario modelling decision, not a Stellar protocol fact: the Stellar protocol defines a passphrase, not a notion of 'testnet' or 'mainnet'.",
+      "enum": ["LOCAL", "FUTURENET", "TESTNET", "MAINNET", "CUSTOM"]
+    },
+    "passphrase": {
+      "description": "The Stellar network passphrase, which is the authoritative identifier of a Stellar network. Known values as of specification version 1.0.0 are 'Public Global Stellar Network ; September 2015' (Mainnet), 'Test SDF Network ; September 2015' (Testnet) and 'Test SDF Future Network ; October 2022' (Futurenet); these are Stellar facts, cited in docs/network-model.md, and they can change only through a Stellar protocol decision.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "networkId": {
+      "description": "The Stellar network ID, which is the SHA-256 hash of the passphrase, hex-encoded. Recorded when known so that a consumer can confirm the passphrase was interpreted as intended; rule provenance/contract-to-deployment requires that when both are present they agree, and a vector proves the known networks satisfy this.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rpcUrl": {
+      "description": "The Stellar RPC endpoint used for contract and event queries. Amasario does not maintain a registry of endpoints, so a descriptor that needs one must supply it.",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "horizonUrl": {
+      "description": "The Horizon endpoint used for ledger, transaction and operation queries, where the analysis needed them.",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "protocolVersion": {
+      "description": "The Stellar protocol version observed at the boundary, when it could be read. Recorded because the set of observable facts depends on the protocol version, so an observation without it may not be reproducible later.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "passphraseRecognised": {
+      "description": "Whether the passphrase matched a network Amasario recognises. Read together with type: an unrecognised passphrase on a CUSTOM type is expected, whereas an unrecognised passphrase on a MAINNET type is a configuration error and must be surfaced rather than assumed benign.",
+      "type": "boolean"
+    }
+  }
+}

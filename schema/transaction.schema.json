@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/transaction.schema.json",
+  "title": "Transaction",
+  "description": "A Stellar ledger transaction as observed. Transactions are the strongest evidence class Amasario has for what actually happened on a network, which is why the success flag is required rather than optional: a failed transaction is genuine evidence that an attempt occurred and equally genuine evidence that its intended effect did not take place, and a model that cannot distinguish the two will eventually cite a failure as proof of success.",
+  "type": "object",
+  "required": ["hash", "network", "ledger", "successful"],
+  "additionalProperties": false,
+  "properties": {
+    "hash": {
+      "description": "The transaction hash, lowercase hex. In Stellar the transaction hash is a 32-byte value, so this is 64 hex characters.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "network": {
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "ledger": {
+      "description": "The ledger the transaction was included in.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "successful": {
+      "description": "Whether the transaction is recorded as successful. Required, because every downstream claim that cites a transaction depends on this field and nothing in the evidence set can recover it if it is omitted.",
+      "type": "boolean"
+    },
+    "resultCode": {
+      "description": "The transaction result code as reported by the network, when known. Recorded verbatim rather than interpreted, so that Amasario does not need to model every result code to report a failure accurately.",
+      "type": "string",
+      "maxLength": 128
+    },
+    "operationCount": {
+      "description": "The number of operations in the transaction. Recorded so that a deployment operation index can be interpreted without refetching the transaction.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "sourceAccount": {
+      "description": "The account that submitted the transaction.",
+      "type": "string",
+      "maxLength": 128
+    },
+    "closeTime": {
+      "description": "The ledger close time reported for the transaction.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "feeCharged": {
+      "description": "The fee charged, in stroops. Recorded for completeness of the observation and never used in any Amasario analysis.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "envelopeDigest": {
+      "description": "A digest over the transaction envelope, when the analysis needed to pin the exact submitted bytes rather than only the transaction hash.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "memo": {
+      "description": "The transaction memo, when present and when it is not sensitive. Memos are user-supplied and can contain personal data, so an implementation must not record a memo it has not been explicitly configured to retain; see docs/privacy.md.",
+      "type": "string",
+      "maxLength": 512
+    }
+  }
+}

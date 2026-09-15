@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/event.schema.json",
+  "title": "Event",
+  "description": "A contract or system event emitted during ledger execution. Events are the primary observable evidence for runtime relationships: a cross-contract invocation that leaves no event and no operation is not observable, and Amasario reports it as unknown rather than inferring it. The type values mirror the categories the Stellar RPC event API exposes (Stellar fact, cited in docs/network-model.md), uppercased to follow Amasario's taxonomy convention.",
+  "type": "object",
+  "required": ["id", "contractId", "type", "ledger", "transactionHash"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "A stable identifier for this event within the producing document, typically derived from the transaction hash and the event index so that two observations of the same event share an identifier.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "contractId": {
+      "description": "The contract that emitted the event.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "type": {
+      "description": "The event category as reported by the network: SYSTEM for events emitted by the protocol itself, CONTRACT for events emitted by contract code, DIAGNOSTIC for events emitted for debugging and not guaranteed to be retained.",
+      "enum": ["SYSTEM", "CONTRACT", "DIAGNOSTIC"]
+    },
+    "ledger": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "transactionHash": {
+      "description": "The transaction whose execution emitted this event. Required, because an event with no transaction cannot be located again and is therefore not usable evidence.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "eventIndex": {
+      "description": "The zero-based position of this event within the transaction's event list. Needed together with the transaction hash to identify the event uniquely.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "topics": {
+      "description": "The event topics, in order, each as a scalar-encoded string. Kept opaque except for the contract address and symbol topics that Amasario interprets, because inventing a decoder for arbitrary topic types would mean guessing at contract-specific encodings.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 4096
+      }
+    },
+    "dataDigest": {
+      "description": "A digest over the event payload. The payload itself is not modelled, because it is contract-defined; the digest is enough to detect that an event the analysis depended on has changed.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "inSuccessfulTransaction": {
+      "description": "Whether the emitting transaction is recorded as successful. An event from a failed transaction may still be emitted but must not be cited as evidence that the effect it describes occurred.",
+      "type": "boolean"
+    }
+  }
+}
