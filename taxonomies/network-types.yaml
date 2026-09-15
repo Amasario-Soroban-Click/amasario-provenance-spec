@@ -1,0 +1,66 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: network-types
+name: Network Types
+openness: open
+consumersMustHandleUnknown: true
+changeClass: additive
+description: >
+  The network environments an Amasario observation can be made against.
+
+  A network type is an Amasario classification, not a Stellar protocol fact: it
+  groups environments that share operational semantics so a consumer can apply
+  the right expectations about durability and availability. The Stellar network
+  passphrase is the fact that actually identifies a Stellar network, and it is
+  recorded separately on the network descriptor because two environments can
+  share a passphrase while having different endpoints and retention.
+
+  A consumer MUST treat an unrecognised network type as requiring explicit
+  operator confirmation rather than assuming production safety. In particular,
+  code that treats "not MAINNET" as "safe to mutate" is prohibited.
+terms:
+  - id: LOCAL
+    label: local
+    description: >
+      A developer-controlled environment, typically a local Stellar Quickstart
+      container or a standalone core instance. State is disposable, retention is
+      not guaranteed, and a ledger boundary observed here is not meaningful
+      evidence outside that environment.
+    durability: ephemeral
+    introducedIn: 1.0.0
+  - id: FUTURENET
+    label: futurenet
+    description: >
+      A Stellar-operated environment for protocol features ahead of testnet.
+      State can be reset without notice, so an observation here MUST record its
+      ledger boundary and MUST NOT be treated as stable over time.
+    durability: reset_without_notice
+    introducedIn: 1.0.0
+  - id: TESTNET
+    label: testnet
+    description: >
+      The public Stellar test network. Persistent enough for integration testing
+      of discovery and verification, but contract state is routinely recycled and
+      testnet identifiers carry no production meaning.
+    durability: persistent_but_untrusted
+    introducedIn: 1.0.0
+  - id: MAINNET
+    label: mainnet
+    description: >
+      The public Stellar production network. Observations here are the only ones
+      with production significance, and any mutating command MUST require an
+      explicit opt-in rather than being a default.
+    durability: authoritative
+    introducedIn: 1.0.0
+  - id: CUSTOM
+    label: custom
+    description: >
+      An operator-defined environment reachable through explicitly supplied
+      endpoints, such as a private network, a fork, or a partner environment. The
+      descriptor MUST supply the endpoints because Amasario does not maintain a
+      registry of private networks.
+    durability: operator_defined
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/network.schema.json
+    pointer: /properties/type

@@ -1,0 +1,62 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: deployment-statuses
+name: Deployment Statuses
+openness: open
+consumersMustHandleUnknown: true
+changeClass: additive
+description: >
+  What is known about a deployment event. A deployment status describes the
+  current state of a record about a deployment, not a judgement about whether the
+  deployment was a good idea.
+
+  The statuses are ordered by how much is established: UNKNOWN carries no
+  assertion, OBSERVED carries the assertion that a deployment record exists but
+  not that it succeeded or is still effective, CONFIRMED adds success and
+  effectiveness, and the remaining terms are explicit negative states.
+terms:
+  - id: OBSERVED
+    label: observed
+    description: >
+      A deployment record was observed at the stated boundary, but its success or
+      current effectiveness was not established. This is the honest default for a
+      record discovered from a transaction that was not inspected in full.
+    establishesSuccess: false
+    introducedIn: 1.0.0
+  - id: CONFIRMED
+    label: confirmed
+    description: >
+      The deployment is evidenced as successful and the resulting contract is
+      reported by the network at the stated boundary. Requires at least
+      deployment and transaction evidence, and MUST NOT be asserted from a
+      transaction that failed.
+    establishesSuccess: true
+    introducedIn: 1.0.0
+  - id: UNCONFIRMED
+    label: unconfirmed
+    description: >
+      A deployment was attempted or reported, but the resulting contract could
+      not be observed. This differs from FAILED: the outcome is unknown rather
+      than negative, and a consumer MUST NOT treat it as evidence of failure.
+    establishesSuccess: false
+    introducedIn: 1.0.0
+  - id: FAILED
+    label: failed
+    description: >
+      The deployment is evidenced as not having taken effect, for example because
+      its transaction is recorded as unsuccessful. Only assertable from
+      transaction evidence that explicitly records failure.
+    establishesSuccess: false
+    introducedIn: 1.0.0
+  - id: UNKNOWN
+    label: unknown
+    description: >
+      The status could not be established, for example because the deployment
+      record was referenced but its transaction was not reachable at the
+      observation boundary. Distinct from UNCONFIRMED, which means an attempt was
+      observed.
+    establishesSuccess: false
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/deployment.schema.json
+    pointer: /properties/status
