@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/dependency-edge.schema.json",
+  "title": "Dependency Edge",
+  "description": "A single typed, directed, evidenced edge between two entities. This is the atomic unit of the dependency graph: it names a source, a target, the relationship between them, the evidence that establishes it, the confidence in that evidence, and the observation boundary over which it was observed. An edge with no evidence is not a weaker edge, it is not an edge at all.",
+  "type": "object",
+  "required": ["id", "source", "target", "relationship", "evidence", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The edge identifier. Stable across runs for the same edge, so that a snapshot diff can tell an unchanged edge from a replaced one.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "source": {
+      "description": "The subject of the relationship.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "target": {
+      "description": "The object of the relationship.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "relationship": {
+      "description": "The typed relationship. Constrained to relationship-types, which also declares which entity kinds this relationship may connect and in which direction a change propagates.",
+      "enum": [
+        "DEPENDS_ON",
+        "INVOCATES",
+        "BUILT_FROM",
+        "DERIVED_FROM",
+        "DEPLOYED_AS",
+        "OBSERVED_IN",
+        "VERIFIED_BY",
+        "AFFECTS"
+      ]
+    },
+    "dependencyClass": {
+      "description": "The dependency classification, when this edge is a dependency. Reuses the dependency-types enumeration by reference rather than restating it, so the two cannot drift apart.",
+      "$ref": "https://amasario.dev/spec/v1/schema/dependency.schema.json#/properties/type"
+    },
+    "evidence": {
+      "description": "Evidence establishing this edge. At least one record is required.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    },
+    "confidence": {
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    },
+    "network": {
+      "description": "The network the edge was observed on, required for edges established from network observation.",
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "boundary": {
+      "description": "The observation boundary of this edge. An edge without a boundary cannot be reproduced, because the same query at a different boundary may legitimately return a different answer.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "firstObserved": {
+      "description": "The earliest boundary at which this edge was seen.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "lastObserved": {
+      "description": "The latest boundary at which this edge was seen. Must not precede firstObserved, which is enforced by rule dependency/direct-dependency.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "verificationStatus": {
+      "description": "The outcome of checking this edge against its evidence. References the canonical verification-statuses enumeration in provenance.schema.json.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/properties/verificationStatus"
+    },
+    "observed": {
+      "description": "Whether the edge was directly observed rather than inferred. Required wherever the distinction could be lost in serialisation, because reporting an inferred edge as observed is the single most misleading thing a dependency tool can do.",
+      "type": "boolean"
+    },
+    "metadata": {
+      "description": "Extension point for producer-defined detail. Same restriction as in dependency.schema.json: nothing here may establish, strengthen or contradict a claim.",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

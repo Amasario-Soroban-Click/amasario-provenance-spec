@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/dependency-set.schema.json",
+  "title": "Dependency Set",
+  "description": "The complete set of dependency edges known for a contract at a boundary, partitioned into the direct edges and those reached only transitively. The set records its own completeness: bounded traversal is a normal and necessary implementation choice, but a truncated set that does not say it was truncated is indistinguishable from a complete one, which would let a consumer conclude that a dependency does not exist when the analysis merely stopped early.",
+  "type": "object",
+  "required": ["edges"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "Identifier for this set within the producing document.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "edges": {
+      "description": "Every edge in the set. Rule dependency/transitive-dependency requires that each edge also appears in exactly one of direct or transitive, so the partition cannot silently lose an edge.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/dependency-edge.schema.json"
+      }
+    },
+    "direct": {
+      "description": "Identifiers of the edges whose class is DIRECT. One hop from the analysed contract.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "transitive": {
+      "description": "Identifiers of the edges reached only through one or more intermediate entities.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "cycles": {
+      "description": "Cycles detected in this set, reported rather than resolved. A dependency graph can legitimately contain cycles, so removing them would hide a real topology; instead each cycle is reported with its path so a consumer can decide how to treat it.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["edges"],
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "description": "The edge identifiers forming the cycle, in traversal order.",
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "length": {
+            "description": "The number of edges in the cycle.",
+            "type": "integer",
+            "minimum": 2
+          }
+        }
+      }
+    },
+    "maxDepth": {
+      "description": "The traversal depth the analysis was bounded by. Recorded so that a consumer can tell 'no deeper dependencies exist' from 'the search stopped here'.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "truncated": {
+      "description": "Whether traversal stopped before exhausting the graph. When true, the set makes no claim of completeness, and a consumer must not report an absent dependency as a lack of dependency.",
+      "type": "boolean"
+    },
+    "truncationReason": {
+      "description": "Why traversal stopped, when truncated. Required by rule dependency/transitive-dependency whenever truncated is true, so that a bound is always attributable to a stated limit rather than to an arbitrary cutoff.",
+      "enum": [
+        "MAX_DEPTH_REACHED",
+        "MAX_NODES_REACHED",
+        "EVIDENCE_UNAVAILABLE",
+        "BOUNDARY_REACHED",
+        "RATE_LIMITED",
+        "CANCELLED"
+      ]
+    },
+    "unresolved": {
+      "description": "Dependencies that were identified but could not be resolved. Kept separate from edges because a resolver failure and an absent dependency are different findings that must not be merged.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reason"],
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+          },
+          "reason": {
+            "description": "Why the dependency could not be resolved. A network failure is recorded here rather than being converted into an empty result.",
+            "enum": [
+              "NOT_FOUND",
+              "NETWORK_ERROR",
+              "TIMEOUT",
+              "MALFORMED_RESPONSE",
+              "OUT_OF_BOUNDARY",
+              "NOT_PERMITTED",
+              "UNSUPPORTED"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "boundary": {
+      "description": "The observation boundary the set was assembled at.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    }
+  }
+}

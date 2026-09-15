@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/dependency.schema.json",
+  "title": "Dependency",
+  "description": "A dependency relationship between two entities together with the basis on which it was established. The basis is required and constrained: Amasario does not accept an unexplained dependency. In particular, a dependency must never be asserted because two projects share a name, mention each other in documentation, exist in the same ecosystem, or carry similar metadata. Those are all representable here as nothing at all, which is the intended outcome.",
+  "type": "object",
+  "required": ["source", "target", "type", "basis", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The dependency identifier, used by relationships and reports to refer to it.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "source": {
+      "description": "The depending entity.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "target": {
+      "description": "The entity depended upon. Must differ from source; a self-dependency is representable only as a cycle in the graph, which is a distinct construct, and rule dependency/direct-dependency rejects a dependency whose source and target are identical and of the same kind.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "type": {
+      "description": "The dependency class. Constrained to dependency-types, each of which declares the evidence classes that must be present for a dependency of that class to be assertable at all.",
+      "enum": ["DIRECT", "TRANSITIVE", "CONTRACT", "PACKAGE", "WASM", "RUNTIME", "EXTERNAL"]
+    },
+    "basis": {
+      "description": "How the dependency was established. This field is the difference between evidence and speculation: declaration is weaker than resolution, resolution is weaker than observation, and each value states which. INFERRED_INTERFACE is present so that an interface-shape guess can be recorded honestly rather than either discarded or promoted.",
+      "enum": [
+        "DECLARED_MANIFEST",
+        "RESOLVED_LOCKFILE",
+        "OBSERVED_INVOCATION",
+        "OBSERVED_EVENT",
+        "EMBEDDED_DIGEST",
+        "CONFIGURED_ENDPOINT",
+        "ATTESTED",
+        "INFERRED_INTERFACE"
+      ]
+    },
+    "evidence": {
+      "description": "Evidence supporting this dependency. At least one record is required, and empty is a schema violation rather than a weakly supported dependency.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    },
+    "confidence": {
+      "description": "How strongly the evidence supports this dependency.",
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    },
+    "path": {
+      "description": "For a TRANSITIVE dependency, the intermediate entities between source and target, in order. Required for TRANSITIVE by rule dependency/transitive-dependency, because an unexplained transitive dependency is indistinguishable from a guess.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+      }
+    },
+    "network": {
+      "description": "The network the dependency was observed on, when it was observed rather than declared.",
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "firstObserved": {
+      "description": "The bottom of the boundary range over which this dependency has been observed.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "lastObserved": {
+      "description": "The top of the boundary range over which this dependency has been observed.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "verificationStatus": {
+      "description": "The outcome of checking this dependency's claim against its evidence. References the canonical verification-statuses enumeration in provenance.schema.json.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/properties/verificationStatus"
+    },
+    "metadata": {
+      "description": "An extension point for producer-defined detail, such as the manifest file and line that declared the dependency. This is the only object in the specification with open properties, and nothing in metadata may be used to establish, strengthen or contradict a claim: a claim that matters must be expressed as a typed field or as evidence.",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
