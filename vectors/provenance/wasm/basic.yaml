@@ -1,0 +1,56 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/wasm/basic
+domain: provenance
+operation: compare-artifact-to-deployed-executable
+deterministic: true
+description: >
+  Compares a claimed build artifact digest against the executable digest the network
+  reports for a contract, and derives the provenance verification status from the
+  comparison. Three outcomes are distinguished: agreement yields VERIFIED, a
+  disagreeing digest yields CONFLICTING, and a missing observation yields UNVERIFIED.
+  The vector exists because collapsing the middle case is the most damaging mistake
+  this specification can be asked to represent, and an engine must be shown to
+  distinguish it from the other two.
+input:
+  cases:
+    - name: match
+      deployedHash: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+      artifactDigest: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+      deployedObservedAtBoundary: true
+    - name: mismatch
+      deployedHash: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+      artifactDigest: 31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158
+      deployedObservedAtBoundary: true
+    - name: no-observation
+      artifactDigest: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+      deployedObservedAtBoundary: false
+expected:
+  result:
+    comparisons:
+      - name: match
+        compared: true
+        digestsEqual: true
+        verificationStatus: VERIFIED
+        maximumLevel: VERIFIED
+      - name: mismatch
+        compared: true
+        digestsEqual: false
+        verificationStatus: CONFLICTING
+        maximumLevel: LOW_CONFIDENCE
+      - name: no-observation
+        compared: false
+        digestsEqual: null
+        verificationStatus: UNVERIFIED
+        maximumLevel: UNKNOWN
+    assertions:
+      - A digest mismatch MUST NOT be reported as PARTIALLY_VERIFIED or VERIFIED.
+      - An unperformed comparison MUST NOT be reported as a mismatch.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"artifactDigest":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","deployedHash":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","deployedObservedAtBoundary":true,"name":"match"},{"artifactDigest":"31c70db0f04ccb4765b2f80013ba46acaae648cebdeaae07ff56fb0a00ccd158","deployedHash":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","deployedObservedAtBoundary":true,"name":"mismatch"},{"artifactDigest":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","deployedObservedAtBoundary":false,"name":"no-observation"}]}
+    inputDigest: sha256:af9a3604d4d7c3657ec281c07230af5fbcd9e245d05b778991e0e5c3afca31ea
+    outputCanonical: |-
+      {"assertions":["A digest mismatch MUST NOT be reported as PARTIALLY_VERIFIED or VERIFIED.","An unperformed comparison MUST NOT be reported as a mismatch."],"comparisons":[{"compared":true,"digestsEqual":true,"maximumLevel":"VERIFIED","name":"match","verificationStatus":"VERIFIED"},{"compared":true,"digestsEqual":false,"maximumLevel":"LOW_CONFIDENCE","name":"mismatch","verificationStatus":"CONFLICTING"},{"compared":false,"digestsEqual":null,"maximumLevel":"UNKNOWN","name":"no-observation","verificationStatus":"UNVERIFIED"}]}
+    outputDigest: sha256:81e668069528f656e7e1cfdc1f56ceb26cd0a77e2f70d360b94694391e90e6ea

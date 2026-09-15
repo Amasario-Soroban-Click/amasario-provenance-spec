@@ -1,0 +1,60 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/transitive/basic
+domain: impact
+operation: expand-transitive-impact
+deterministic: true
+description: >
+  Expands a two-hop impact and records the aggregation applied along the way. The
+  vector fixes two rules at once: a two-hop finding carries TRANSITIVE but not
+  MULTI_HOP, and the finding's confidence is the minimum across the steps rather than
+  the confidence of the edge that was reached last. It also records the bound reached,
+  so that a consumer can distinguish a traversal that exhausted the graph from one
+  that stopped because the configured depth was reached.
+input:
+  changedEntity:
+    kind: SOURCE
+    id: https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc
+  maxDepth: 2
+  steps:
+    - edgeId: edge_build_source
+      relationship: BUILT_FROM
+      level: HIGH_CONFIDENCE
+      traversedInverted: true
+    - edgeId: edge_artifact_build
+      relationship: DERIVED_FROM
+      level: MEDIUM_CONFIDENCE
+      traversedInverted: true
+  reached:
+    kind: ARTIFACT
+    id: artifact_wasm_alpha
+expected:
+  result:
+    findings:
+      - affectedEntity:
+          kind: ARTIFACT
+          id: artifact_wasm_alpha
+        hopDepth: 2
+        impactType:
+          - TRANSITIVE
+          - ARTIFACT
+        relationshipTypes:
+          - BUILT_FROM
+          - DERIVED_FROM
+        direction: DEPENDENTS
+        termination: MAX_DEPTH_REACHED
+        aggregatedLevel: MEDIUM_CONFIDENCE
+        aggregationStrategy: minimum_ordinal
+        truncated: true
+    assertions:
+      - A hop depth of 2 MUST carry TRANSITIVE and MUST NOT carry MULTI_HOP.
+      - The aggregated level MUST equal the lowest level among the steps.
+      - Reaching the configured depth MUST set truncated and report it.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"changedEntity":{"id":"https://example.invalid/amasario/alpha-contract@5516af291249414332282f5b6655c9033f73e3fc","kind":"SOURCE"},"maxDepth":2,"reached":{"id":"artifact_wasm_alpha","kind":"ARTIFACT"},"steps":[{"edgeId":"edge_build_source","level":"HIGH_CONFIDENCE","relationship":"BUILT_FROM","traversedInverted":true},{"edgeId":"edge_artifact_build","level":"MEDIUM_CONFIDENCE","relationship":"DERIVED_FROM","traversedInverted":true}]}
+    inputDigest: sha256:62b91e5c95372a88907f848a0b79632b66261d952c48e2ccf7d53fddfd246db5
+    outputCanonical: |-
+      {"assertions":["A hop depth of 2 MUST carry TRANSITIVE and MUST NOT carry MULTI_HOP.","The aggregated level MUST equal the lowest level among the steps.","Reaching the configured depth MUST set truncated and report it."],"findings":[{"affectedEntity":{"id":"artifact_wasm_alpha","kind":"ARTIFACT"},"aggregatedLevel":"MEDIUM_CONFIDENCE","aggregationStrategy":"minimum_ordinal","direction":"DEPENDENTS","hopDepth":2,"impactType":["TRANSITIVE","ARTIFACT"],"relationshipTypes":["BUILT_FROM","DERIVED_FROM"],"termination":"MAX_DEPTH_REACHED","truncated":true}]}
+    outputDigest: sha256:0608e475caced72f0dc5fa5fda186da87274f3352403bb89534f20ee53610264

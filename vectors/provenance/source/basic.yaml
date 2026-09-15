@@ -1,0 +1,55 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/source/basic
+domain: provenance
+operation: normalise-source-provenance
+deterministic: true
+description: >
+  Normalises source provenance and derives the highest verification status the
+  recorded evidence can support. The vector fixes the rule that a revision resolved
+  through a mutable reference cannot reach VERIFIED, because the reference can be
+  moved after the analysis and a later consumer would then be checking the claim
+  against different content than the claim was made about.
+input:
+  cases:
+    - name: tag-resolved-with-archive-digest
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+      ref:
+        type: tag
+        name: v1.0.0
+      artifactDigest:
+        algorithm: sha256
+        value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    - name: branch-resolved-with-archive-digest
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+      ref:
+        type: branch
+        name: main
+      artifactDigest:
+        algorithm: sha256
+        value: 96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a
+    - name: revision-only
+      revision: 5516af291249414332282f5b6655c9033f73e3fc
+expected:
+  result:
+    normalisations:
+      - name: tag-resolved-with-archive-digest
+        buildRelationship: BUILT_BY_DECLARED_BUILD
+        maximumStatus: VERIFIED
+        reason: The revision is addressed by an immutable tag and the archive digest can be recomputed.
+      - name: branch-resolved-with-archive-digest
+        buildRelationship: BUILT_BY_DECLARED_BUILD
+        maximumStatus: MEDIUM_CONFIDENCE
+        reason: The revision was reached through a mutable branch, so the reference may since point elsewhere even though the digest is checkable.
+      - name: revision-only
+        buildRelationship: NOT_LINKED
+        maximumStatus: UNVERIFIED
+        reason: No build relationship was established, so there is nothing to verify the revision against.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"artifactDigest":{"algorithm":"sha256","value":"96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a"},"name":"tag-resolved-with-archive-digest","ref":{"name":"v1.0.0","type":"tag"},"revision":"5516af291249414332282f5b6655c9033f73e3fc"},{"artifactDigest":{"algorithm":"sha256","value":"96b267cfffbfe633f8525525323c47395f017de0f35269fbadc1cf0e12003f9a"},"name":"branch-resolved-with-archive-digest","ref":{"name":"main","type":"branch"},"revision":"5516af291249414332282f5b6655c9033f73e3fc"},{"name":"revision-only","revision":"5516af291249414332282f5b6655c9033f73e3fc"}]}
+    inputDigest: sha256:d07fba45aad7e077cf69235e60a8fc977c71ee918cc04ecfb8f969041a3ad28b
+    outputCanonical: |-
+      {"normalisations":[{"buildRelationship":"BUILT_BY_DECLARED_BUILD","maximumStatus":"VERIFIED","name":"tag-resolved-with-archive-digest","reason":"The revision is addressed by an immutable tag and the archive digest can be recomputed."},{"buildRelationship":"BUILT_BY_DECLARED_BUILD","maximumStatus":"MEDIUM_CONFIDENCE","name":"branch-resolved-with-archive-digest","reason":"The revision was reached through a mutable branch, so the reference may since point elsewhere even though the digest is checkable."},{"buildRelationship":"NOT_LINKED","maximumStatus":"UNVERIFIED","name":"revision-only","reason":"No build relationship was established, so there is nothing to verify the revision against."}]}
+    outputDigest: sha256:cda9f8374fea16180fb33ea97bd39fe5bf94bc6af5f44a7768d4a76bc4d839ab

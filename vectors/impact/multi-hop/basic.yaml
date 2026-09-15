@@ -1,0 +1,69 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/multi-hop/basic
+domain: impact
+operation: classify-impact-distance
+deterministic: true
+description: >
+  Derives the distance classifications of impact findings from their hop depth alone.
+  The vector exists to fix the boundary cases that a hand-written implementation
+  usually gets wrong by one: depth 1 is DIRECT, depth 2 is TRANSITIVE without
+  MULTI_HOP, and depth 3 is TRANSITIVE and MULTI_HOP together. It also records that a
+  depth of zero is meaningful only for a finding triggered by a change to the entity
+  itself, which is why a CHANGE-triggered finding at depth zero is legal and a
+  propagation finding at depth zero is not.
+input:
+  cases:
+    - name: depth-zero-change-trigger
+      hopDepth: 0
+      triggeredByChange: true
+    - name: depth-one
+      hopDepth: 1
+      triggeredByChange: false
+    - name: depth-two
+      hopDepth: 2
+      triggeredByChange: false
+    - name: depth-three
+      hopDepth: 3
+      triggeredByChange: false
+    - name: depth-four
+      hopDepth: 4
+      triggeredByChange: false
+expected:
+  result:
+    classifications:
+      - name: depth-zero-change-trigger
+        impactType:
+          - CHANGE
+        valid: true
+        requiresChangeType: true
+      - name: depth-one
+        impactType:
+          - DIRECT
+        valid: true
+      - name: depth-two
+        impactType:
+          - TRANSITIVE
+        valid: true
+      - name: depth-three
+        impactType:
+          - TRANSITIVE
+          - MULTI_HOP
+        valid: true
+      - name: depth-four
+        impactType:
+          - TRANSITIVE
+          - MULTI_HOP
+        valid: true
+    assertions:
+      - MULTI_HOP MUST be present at a depth of 3 or greater and MUST be absent below it.
+      - A finding at depth 0 MUST include CHANGE and MUST carry a changeType.
+      - A propagation finding MUST include at least one distance classification.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"hopDepth":0,"name":"depth-zero-change-trigger","triggeredByChange":true},{"hopDepth":1,"name":"depth-one","triggeredByChange":false},{"hopDepth":2,"name":"depth-two","triggeredByChange":false},{"hopDepth":3,"name":"depth-three","triggeredByChange":false},{"hopDepth":4,"name":"depth-four","triggeredByChange":false}]}
+    inputDigest: sha256:df9c8490f8279eced18d0b478c00281ba3b7b31ef98874a6366014142ca6591a
+    outputCanonical: |-
+      {"assertions":["MULTI_HOP MUST be present at a depth of 3 or greater and MUST be absent below it.","A finding at depth 0 MUST include CHANGE and MUST carry a changeType.","A propagation finding MUST include at least one distance classification."],"classifications":[{"impactType":["CHANGE"],"name":"depth-zero-change-trigger","requiresChangeType":true,"valid":true},{"impactType":["DIRECT"],"name":"depth-one","valid":true},{"impactType":["TRANSITIVE"],"name":"depth-two","valid":true},{"impactType":["TRANSITIVE","MULTI_HOP"],"name":"depth-three","valid":true},{"impactType":["TRANSITIVE","MULTI_HOP"],"name":"depth-four","valid":true}]}
+    outputDigest: sha256:1b73d86b480efee8bb3ba735b1bc207be506b25b8eb74e33fc11dbd4121ff41c

@@ -1,0 +1,67 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/build/basic
+domain: provenance
+operation: normalise-build-provenance
+deterministic: true
+description: >
+  Normalises build provenance and derives the verification status from which inputs
+  are actually recorded. The vector encodes the decision that a build missing its
+  toolchain or its configuration digest cannot exceed PARTIALLY_VERIFIED, and that an
+  unattempted reproducibility check is recorded as NOT_ATTEMPTED rather than
+  NOT_REPRODUCED. Reading an untried build as a failed one is a false negative that
+  makes verification look hopeless and discourages it.
+input:
+  cases:
+    - name: complete
+      sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+      toolchain:
+        name: rustc
+        version: 1.84.0
+        target: wasm32-unknown-unknown
+      configurationDigest:
+        algorithm: sha256
+        value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+      reproducibility: REPRODUCED
+    - name: missing-toolchain
+      sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+      configurationDigest:
+        algorithm: sha256
+        value: 951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757
+      reproducibility: NOT_ATTEMPTED
+    - name: missing-configuration
+      sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+      toolchain:
+        name: rustc
+        version: 1.84.0
+      reproducibility: NOT_ATTEMPTED
+expected:
+  result:
+    normalisations:
+      - name: complete
+        inputsComplete: true
+        maximumStatus: VERIFIED
+        reproducibilityNormalised: REPRODUCED
+      - name: missing-toolchain
+        inputsComplete: false
+        maximumStatus: PARTIALLY_VERIFIED
+        reproducibilityNormalised: NOT_ATTEMPTED
+        missingInputs:
+          - toolchain
+      - name: missing-configuration
+        inputsComplete: false
+        maximumStatus: PARTIALLY_VERIFIED
+        reproducibilityNormalised: NOT_ATTEMPTED
+        missingInputs:
+          - configurationDigest
+    assertions:
+      - A build that is not complete MUST NOT be reported as VERIFIED.
+      - An unattempted reproducibility check MUST NOT be normalised to NOT_REPRODUCED.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"configurationDigest":{"algorithm":"sha256","value":"951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757"},"name":"complete","reproducibility":"REPRODUCED","sourceRevision":"5516af291249414332282f5b6655c9033f73e3fc","toolchain":{"name":"rustc","target":"wasm32-unknown-unknown","version":"1.84.0"}},{"configurationDigest":{"algorithm":"sha256","value":"951582bb914f325927d455b3f7577c5b857a38d491de3df0cf162c309fc39757"},"name":"missing-toolchain","reproducibility":"NOT_ATTEMPTED","sourceRevision":"5516af291249414332282f5b6655c9033f73e3fc"},{"name":"missing-configuration","reproducibility":"NOT_ATTEMPTED","sourceRevision":"5516af291249414332282f5b6655c9033f73e3fc","toolchain":{"name":"rustc","version":"1.84.0"}}]}
+    inputDigest: sha256:64b077d72742b42c64b30ad2a01d6bc0cb47e2301ba1a4acd15345414adfd3b2
+    outputCanonical: |-
+      {"assertions":["A build that is not complete MUST NOT be reported as VERIFIED.","An unattempted reproducibility check MUST NOT be normalised to NOT_REPRODUCED."],"normalisations":[{"inputsComplete":true,"maximumStatus":"VERIFIED","name":"complete","reproducibilityNormalised":"REPRODUCED"},{"inputsComplete":false,"maximumStatus":"PARTIALLY_VERIFIED","missingInputs":["toolchain"],"name":"missing-toolchain","reproducibilityNormalised":"NOT_ATTEMPTED"},{"inputsComplete":false,"maximumStatus":"PARTIALLY_VERIFIED","missingInputs":["configurationDigest"],"name":"missing-configuration","reproducibilityNormalised":"NOT_ATTEMPTED"}]}
+    outputDigest: sha256:8ee73a63dd1909a22aae9b373330a138faf46c15405b9aa5543c67b7e60e28e9

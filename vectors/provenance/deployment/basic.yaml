@@ -1,0 +1,58 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: provenance/deployment/basic
+domain: provenance
+operation: derive-deployment-status
+deterministic: true
+description: >
+  Derives a deployment status from the observations available. The vector fixes the
+  table that keeps four different situations apart: a successful transaction with a
+  subsequent observation of the contract is CONFIRMED, a successful transaction with
+  no observation is OBSERVED, an unsuccessful transaction is FAILED, and a failed
+  lookup is UNCONFIRMED rather than FAILED. The last line is the one that matters
+  operationally, since reporting an unobserved deployment as failed invites a
+  redundant and potentially destructive redeployment.
+input:
+  cases:
+    - name: successful-with-observation
+      transactionPresent: true
+      transactionSuccessful: true
+      contractObserved: true
+    - name: successful-without-observation
+      transactionPresent: true
+      transactionSuccessful: true
+      contractObserved: false
+    - name: unsuccessful-transaction
+      transactionPresent: true
+      transactionSuccessful: false
+      contractObserved: false
+    - name: lookup-failed
+      transactionPresent: true
+      transactionSuccessful: null
+      contractObserved: false
+expected:
+  result:
+    statuses:
+      - name: successful-with-observation
+        status: CONFIRMED
+        establishesSuccess: true
+      - name: successful-without-observation
+        status: OBSERVED
+        establishesSuccess: false
+      - name: unsuccessful-transaction
+        status: FAILED
+        establishesSuccess: false
+      - name: lookup-failed
+        status: UNCONFIRMED
+        establishesSuccess: false
+    assertions:
+      - An unknown outcome MUST map to UNCONFIRMED and MUST NOT map to FAILED.
+      - CONFIRMED MUST require both a successful transaction and a network observation.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"contractObserved":true,"name":"successful-with-observation","transactionPresent":true,"transactionSuccessful":true},{"contractObserved":false,"name":"successful-without-observation","transactionPresent":true,"transactionSuccessful":true},{"contractObserved":false,"name":"unsuccessful-transaction","transactionPresent":true,"transactionSuccessful":false},{"contractObserved":false,"name":"lookup-failed","transactionPresent":true,"transactionSuccessful":null}]}
+    inputDigest: sha256:fecbe824f27e8997a293de0891912beefabbd6fa650893829d101bdd0906bb7a
+    outputCanonical: |-
+      {"assertions":["An unknown outcome MUST map to UNCONFIRMED and MUST NOT map to FAILED.","CONFIRMED MUST require both a successful transaction and a network observation."],"statuses":[{"establishesSuccess":true,"name":"successful-with-observation","status":"CONFIRMED"},{"establishesSuccess":false,"name":"successful-without-observation","status":"OBSERVED"},{"establishesSuccess":false,"name":"unsuccessful-transaction","status":"FAILED"},{"establishesSuccess":false,"name":"lookup-failed","status":"UNCONFIRMED"}]}
+    outputDigest: sha256:db07b2dcbb2b04c9a655235f768895a871a188c1a901c387906114aabe6b5710

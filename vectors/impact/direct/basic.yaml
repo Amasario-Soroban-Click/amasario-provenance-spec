@@ -1,0 +1,63 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact/direct/basic
+domain: impact
+operation: expand-direct-impact
+deterministic: true
+description: >
+  Expands a one-hop impact from a changed entity over its incoming dependency-like
+  edges. The vector records that traversal for a dependency-like relationship runs
+  against the arrow, because a change to a dependency reaches the entities that depend
+  on it, and that a relationship whose change propagation is none contributes nothing
+  even when it connects the two entities. The second point is the one most likely to
+  be implemented wrongly, since an OBSERVED_IN edge does connect two entities.
+input:
+  changedEntity:
+    kind: WASM
+    id: artifact_wasm_alpha
+  edges:
+    - id: edge_alpha_wasm
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: WASM
+        id: artifact_wasm_alpha
+      relationship: DEPLOYED_AS
+    - id: edge_wasm_tx
+      source:
+        kind: WASM
+        id: artifact_wasm_alpha
+      target:
+        kind: TRANSACTION
+        id: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+      relationship: OBSERVED_IN
+expected:
+  result:
+    findings:
+      - affectedEntity:
+          kind: CONTRACT
+          id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        hopDepth: 1
+        impactType:
+          - DIRECT
+          - CONTRACT
+        relationshipTypes:
+          - DEPLOYED_AS
+        direction: DEPENDENTS
+        stepDirection: inverted
+        termination: TARGET_REACHED
+    excluded:
+      - edgeId: edge_wasm_tx
+        reason: The relationship's change propagation is none, so an observation of a fact is not an effect of a change to it.
+    assertions:
+      - A hop depth of 1 MUST be classified DIRECT.
+      - A relationship whose changePropagation is none MUST NOT produce an impact finding.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"changedEntity":{"id":"artifact_wasm_alpha","kind":"WASM"},"edges":[{"id":"edge_alpha_wasm","relationship":"DEPLOYED_AS","source":{"id":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","kind":"CONTRACT"},"target":{"id":"artifact_wasm_alpha","kind":"WASM"}},{"id":"edge_wasm_tx","relationship":"OBSERVED_IN","source":{"id":"artifact_wasm_alpha","kind":"WASM"},"target":{"id":"00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712","kind":"TRANSACTION"}}]}
+    inputDigest: sha256:477c374f2b0862c82859fe2508d50df5016f79a1b9b543a7ed376da34b9b669c
+    outputCanonical: |-
+      {"assertions":["A hop depth of 1 MUST be classified DIRECT.","A relationship whose changePropagation is none MUST NOT produce an impact finding."],"excluded":[{"edgeId":"edge_wasm_tx","reason":"The relationship's change propagation is none, so an observation of a fact is not an effect of a change to it."}],"findings":[{"affectedEntity":{"id":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","kind":"CONTRACT"},"direction":"DEPENDENTS","hopDepth":1,"impactType":["DIRECT","CONTRACT"],"relationshipTypes":["DEPLOYED_AS"],"stepDirection":"inverted","termination":"TARGET_REACHED"}]}
+    outputDigest: sha256:9c55c4b812694f7b002eb7466978bb0b03ce4c223fac92fb9aca09f7524972ff
