@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/report.schema.json",
+  "title": "Report",
+  "description": "A human- and machine-consumable presentation of an analysis. The schema's central requirement is structural separation: observed facts, inferred relationships, verification outcomes, confidence, unknown information and errors occupy distinct sections and can never be merged. This is what stops a report from presenting an inference in the same voice as an observation, which is the failure mode that makes provenance tooling untrustworthy.",
+  "type": "object",
+  "required": ["apiVersion", "specVersion", "target", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/apiVersion"
+    },
+    "specVersion": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/specVersion"
+    },
+    "target": {
+      "description": "What the report is about.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+    },
+    "boundary": {
+      "description": "The observation boundary the reported analysis was made at.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/observationBoundary"
+    },
+    "sections": {
+      "description": "The report body, separated by epistemic status. Every section is required, even when empty: an absent section and an empty section mean different things, and only one of them is honest.",
+      "type": "object",
+      "required": ["observedFacts", "inferredRelationships", "verification", "confidence", "unknown", "errors"],
+      "additionalProperties": false,
+      "properties": {
+        "observedFacts": {
+          "description": "Statements directly supported by evidence of a record that exists, with no inference. Every entry requires evidence.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        },
+        "inferredRelationships": {
+          "description": "Relationships that were derived rather than observed. Kept separate from observed facts, and each entry must state the basis of the inference.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/statement"
+              },
+              {
+                "type": "object",
+                "required": ["inferenceBasis"],
+                "properties": {
+                  "inferenceBasis": {
+                    "description": "Why the relationship was inferred rather than observed, for example an interface shape consistent with a declared dependency.",
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 2048
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "verification": {
+          "description": "The verification outcome for each subject that was checked.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["subject", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+              },
+              "status": {
+                "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/properties/verificationStatus"
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+                }
+              }
+            }
+          }
+        },
+        "confidence": {
+          "description": "Confidence values assigned in this report, with the evidence each derives from.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["subject", "confidence"],
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+              },
+              "confidence": {
+                "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+              }
+            }
+          }
+        },
+        "unknown": {
+          "description": "Questions the analysis could not answer, each with the reason. This section exists so that a report can be complete about its own incompleteness instead of omitting what it could not determine.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["question", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "question": {
+                "description": "The question that could not be answered, stated as a question.",
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 2048
+              },
+              "reason": {
+                "enum": [
+                  "NOT_FOUND",
+                  "NETWORK_ERROR",
+                  "TIMEOUT",
+                  "MALFORMED_RESPONSE",
+                  "OUT_OF_BOUNDARY",
+                  "NOT_PERMITTED",
+                  "UNSUPPORTED",
+                  "EVIDENCE_UNAVAILABLE",
+                  "NO_EVIDENCE_TYPE_CAN_ANSWER"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            }
+          }
+        },
+        "errors": {
+          "description": "Errors encountered during analysis. Required because a report that silently absorbs its own failures is worse than one that fails outright: it produces a plausible document from partial data.",
+          "type": "array",
+          "items": {
+            "$ref": "https://amasario.dev/spec/v1/schema/error.schema.json"
+          }
+        }
+      }
+    },
+    "relationshipFindings": {
+      "description": "Explanations of why each important relationship exists, so that a reader does not have to reconstruct the reasoning from the evidence set.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["relationship", "explanation"],
+        "additionalProperties": false,
+        "properties": {
+          "relationship": {
+            "$ref": "https://amasario.dev/spec/v1/schema/dependency-edge.schema.json#/properties/relationship"
+          },
+          "edgeId": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 4096
+          },
+          "observationallySupported": {
+            "description": "Whether the relationship was directly observed. A relationship explained only by inference must say so on the finding itself, not only in the section it appears under.",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "disclaimers": {
+      "description": "Statements that must accompany the report. Rule provenance/evidence-traceability requires the non-security-determination disclaimer to be present, so that an implementation cannot emit a report that reads as a security assessment.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 16,
+        "maxLength": 2048
+      }
+    },
+    "truncated": {
+      "description": "Whether any part of the reported analysis was bounded before exhaustion.",
+      "type": "boolean"
+    },
+    "generatedAt": {
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    }
+  },
+  "$defs": {
+    "statement": {
+      "description": "One statement a report makes, with the evidence that supports it.",
+      "type": "object",
+      "required": ["statement", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "statement": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 4096
+        },
+        "entity": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/entityRef"
+        },
+        "evidence": {
+          "description": "Evidence supporting the statement. Required and non-empty: a report statement without evidence is an unsupported assertion, which is the thing this specification exists to prevent.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+          }
+        },
+        "confidence": {
+          "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+        }
+      }
+    }
+  }
+}
