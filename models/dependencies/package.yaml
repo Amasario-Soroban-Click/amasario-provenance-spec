@@ -1,0 +1,63 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/package
+name: Package Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_PACKAGE
+description: >
+  A dependency whose object is a software package or crate. The model insists on a
+  distinction that most tooling blurs: a declared dependency and a resolved
+  dependency are different facts. A manifest says what the author asked for; a
+  lockfile says what was actually compiled. Only the second can support a claim
+  about a deployed artifact.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: source
+    type: object
+    requirement: always
+    description: The depending entity, typically a SOURCE or BUILD entity.
+  - name: target
+    type: object
+    requirement: always
+    description: The package depended upon, identified by name and resolved version where available.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is PACKAGE.
+  - name: basis
+    type: string
+    requirement: always
+    description: Whether the dependency was DECLARED_MANIFEST or RESOLVED_LOCKFILE. The two must not be conflated.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency. A resolved dependency is evidenced by the lockfile artifact.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: How strongly the evidence supports the dependency.
+  - name: verificationStatus
+    type: string
+    requirement: optional
+    description: Outcome of checking the dependency against its evidence.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail, such as the manifest name, or the declared version requirement as distinct from the resolved version.
+relations:
+  - kind: DEPENDS_ON
+    description: The dependency relationship from the depending entity to the package.
+  - kind: DERIVED_FROM
+    description: A build artifact is derived from the lockfile that resolved the package set.
+taxonomies:
+  - dependency-types
+  - artifact-types
+invariants:
+  - A PACKAGE dependency must record whether its basis is declaration or resolution. A declared dependency must not be presented as resolved.
+  - A declared version requirement and a resolved version must be recorded separately when both are known; collapsing them hides the resolution step.
+  - A package must be identified by more than a name where a resolved version or digest is available, because names are not unique across ecosystems.
+nonGoals:
+  - This model does not claim that a resolved package is reachable from the compiled artifact. A dependency may be resolved and never used.
+  - This model does not assess whether a package or version is malicious, deprecated or well maintained.

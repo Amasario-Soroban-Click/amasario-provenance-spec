@@ -1,0 +1,77 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/contract
+name: Contract Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_CONTRACT
+description: >
+  A dependency whose object is another Soroban contract. Establishing this class is
+  where the ecosystem's most tempting shortcut lives: two contracts interacting in
+  the same protocol does not mean one depends on the other. The model therefore
+  admits only bases that can be checked: an observed invocation, an observed event,
+  or an address the subject's source or storage demonstrably references. Interface
+  similarity is admissible only at INFERRED_INTERFACE with LOW_CONFIDENCE.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: source
+    type: object
+    requirement: always
+    description: The depending contract.
+  - name: target
+    type: object
+    requirement: always
+    description: The contract depended upon, identified by contract address on a named network.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is CONTRACT.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established. OBSERVED_INVOCATION and OBSERVED_EVENT are the strongest available bases for this class.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency. For an observed invocation the evidence is the transaction and events that recorded it.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: How strongly the evidence supports the dependency.
+  - name: network
+    type: object
+    requirement: rule
+    description: The network. Required for this class by rule dependency/contract-dependency, because a contract address identifies a contract only together with its network; the schema itself does not make it globally required, since a declared package dependency has no network.
+  - name: firstObserved
+    type: object
+    requirement: optional
+    description: Earliest boundary at which the invocation or reference was observed.
+  - name: lastObserved
+    type: object
+    requirement: optional
+    description: Latest boundary at which it was observed.
+  - name: verificationStatus
+    type: string
+    requirement: optional
+    description: Outcome of checking the dependency's claim against its evidence.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail, such as the function invoked.
+relations:
+  - kind: DEPENDS_ON
+    description: The build-time or source-level dependency relationship.
+  - kind: INVOCATES
+    description: The runtime relationship, assertable only from an observed invocation.
+taxonomies:
+  - dependency-types
+  - evidence-types
+  - network-types
+invariants:
+  - A CONTRACT dependency must name a network. A contract address without a network does not identify a contract.
+  - A CONTRACT dependency based on INFERRED_INTERFACE must not exceed LOW_CONFIDENCE and must not appear among a report's observed facts.
+  - Two contracts existing in the same ecosystem, sharing an operator, or appearing in the same repository are not thereby dependent.
+nonGoals:
+  - This model does not claim that the target contract is reachable, live or correct at the boundary.
+  - This model does not assess the safety or behaviour of either contract.

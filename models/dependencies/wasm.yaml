@@ -1,0 +1,62 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/wasm
+name: WASM Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_WASM
+description: >
+  A dependency whose object is a WebAssembly artifact that the subject embeds,
+  references or was derived from. Identity for this class is a digest and nothing
+  else: a module is identical to another module when their content hashes match, and
+  no amount of metadata similarity establishes a relationship between two modules.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: source
+    type: object
+    requirement: always
+    description: The depending entity, typically a BUILD, ARTIFACT or CONTRACT entity.
+  - name: target
+    type: object
+    requirement: always
+    description: The WASM artifact depended upon, identified by content digest.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is WASM.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established. EMBEDDED_DIGEST is the strongest basis for this class, because a digest match is recomputable.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency. For an embedded module, the evidence is the artifact record carrying the matching digest.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: How strongly the evidence supports the dependency.
+  - name: network
+    type: object
+    requirement: optional
+    description: The network, when the module was observed as a deployed executable rather than as a build input.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail, such as the importing module name. Never used to establish the dependency.
+relations:
+  - kind: DEPENDS_ON
+    description: The dependency relationship from the depending entity to the module.
+  - kind: DERIVED_FROM
+    description: A module is frequently the subject of DERIVED_FROM relative to the build artifact that produced it.
+taxonomies:
+  - dependency-types
+  - artifact-types
+invariants:
+  - A WASM dependency must be established from a digest match or from an explicit build input. Size, module name and metadata similarity are not bases.
+  - A WASM artifact's digest must use sha256, the algorithm permitted for that artifact type.
+  - Two modules with equal digests are the same artifact; two modules with different digests must not be treated as versions of one another unless a build input establishes the derivation.
+nonGoals:
+  - This model does not disassemble, decompile or analyse module content.
+  - This model does not claim that an embedded module is invoked at runtime.

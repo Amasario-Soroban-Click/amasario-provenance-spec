@@ -1,0 +1,76 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/direct
+name: Direct Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_DIRECT
+description: >
+  A dependency in which the subject reaches the object with no intermediate
+  entity. The model's purpose is to make the basis of the dependency a required,
+  enumerated field, so that a declared dependency, a resolved dependency and an
+  observed dependency are distinguishable rather than all presented as "depends
+  on". This is the model that prevents Amasario implying a dependency because two
+  projects mention each other.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: optional
+    description: Identifier used by relationships and reports to refer to this dependency.
+  - name: source
+    type: object
+    requirement: always
+    description: The depending entity.
+  - name: target
+    type: object
+    requirement: always
+    description: The entity depended upon.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is DIRECT.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established. The field that separates evidence from speculation.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency. At least one record is required.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: How strongly the evidence supports the dependency.
+  - name: network
+    type: object
+    requirement: optional
+    description: The network the dependency was observed on, when observed rather than declared.
+  - name: firstObserved
+    type: object
+    requirement: optional
+    description: Earliest boundary at which the dependency was observed.
+  - name: lastObserved
+    type: object
+    requirement: optional
+    description: Latest boundary at which the dependency was observed.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail such as the declaring file and line. Never used to establish, strengthen or contradict a claim.
+relations:
+  - kind: DEPENDS_ON
+    description: The relationship a direct dependency corresponds to in the graph.
+taxonomies:
+  - dependency-types
+  - evidence-types
+  - confidence-levels
+invariants:
+  - A dependency must carry at least one evidence record. An empty evidence set is a malformed dependency, not a weakly supported one.
+  - A dependency must carry a basis. There is no default, because a default basis would let an implementation silently promote a declaration into an observation.
+  - source and target must not be identical and of the same kind.
+  - lastObserved must not precede firstObserved.
+nonGoals:
+  - This model does not claim that a dependency is load-bearing at runtime. A declared package dependency may be unreachable code.
+  - This model does not claim that the target exists, only that the dependency on it is asserted with a stated basis.

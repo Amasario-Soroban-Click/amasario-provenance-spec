@@ -1,0 +1,63 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/external
+name: External Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_EXTERNAL
+description: >
+  A dependency on something outside the observable Amasario boundary: a system,
+  service or repository that can be referenced but not inspected or verified. The
+  model exists so that the edge of the analysis is representable. Without it, a
+  dependency on an uninspectable system would either be dropped, making the
+  contract look self-contained, or presented like an inspected one, which is worse.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: source
+    type: object
+    requirement: always
+    description: The depending entity that references the external system.
+  - name: target
+    type: object
+    requirement: always
+    description: The external entity. Its identifier is a reference, not a digest, because the content cannot be observed.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is EXTERNAL.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established, typically CONFIGURED_ENDPOINT or DECLARED_MANIFEST.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency. For an external entity this is typically OBSERVATION evidence, which asserts presence only.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: Confidence in the dependency. An external dependency whose content cannot be observed should not carry high confidence about the target.
+  - name: verificationStatus
+    type: string
+    requirement: optional
+    description: Outcome of checking the dependency. UNVERIFIED is expected and correct for an uninspectable target.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail, such as the configuration path that referenced the external system.
+relations:
+  - kind: DEPENDS_ON
+    description: The dependency relationship to the external entity.
+  - kind: OBSERVED_IN
+    description: The observation that established the reference, where one exists.
+taxonomies:
+  - dependency-types
+  - evidence-types
+invariants:
+  - An external entity must be marked as outside the observable boundary, so that being uninspectable is never mistaken for being unverified.
+  - An EXTERNAL dependency must not be reported as VERIFIED, because verification requires content that a boundary excludes.
+  - The boundary must be stated on the relationship, so a consumer can tell why the dependency was not followed further.
+nonGoals:
+  - This model does not attempt to inspect external systems.
+  - This model does not claim that an external dependency is unavailable, untrustworthy or unsafe merely because it is out of boundary.

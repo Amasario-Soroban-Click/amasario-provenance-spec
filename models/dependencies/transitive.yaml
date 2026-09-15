@@ -1,0 +1,73 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/transitive
+name: Transitive Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_TRANSITIVE
+description: >
+  A dependency the subject reaches only through one or more intermediate entities.
+  The model requires the intermediate path to be recorded, because a transitive
+  edge without its path is indistinguishable from a guess: a consumer cannot tell
+  whether the analysis walked a real chain or collapsed several uncertain hops into
+  one confident-looking statement.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: optional
+    description: Identifier used by relationships and reports to refer to this dependency.
+  - name: source
+    type: object
+    requirement: always
+    description: The depending entity, which does not depend on the target directly.
+  - name: target
+    type: object
+    requirement: always
+    description: The entity reached through the path.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is TRANSITIVE.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established. A transitive dependency resolved from a lockfile is still established from resolution, not from observation.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence for the whole dependency, in addition to the per-hop evidence the path must carry.
+  - name: path
+    type: array
+    requirement: rule
+    description: The intermediate entities between source and target, in order. Required for TRANSITIVE by rule dependency/transitive-dependency.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: Aggregated confidence across the path, computed as the minimum ordinal so the chain is not stronger than its weakest hop.
+  - name: firstObserved
+    type: object
+    requirement: optional
+    description: Earliest boundary at which the dependency was observed.
+  - name: lastObserved
+    type: object
+    requirement: optional
+    description: Latest boundary at which the dependency was observed.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail. Never used to establish, strengthen or contradict a claim.
+relations:
+  - kind: DEPENDS_ON
+    description: The relationship a transitive dependency corresponds to in the graph, with the path expressed as successive hops.
+taxonomies:
+  - dependency-types
+  - confidence-levels
+invariants:
+  - A TRANSITIVE dependency must carry a non-empty path.
+  - The path must not be empty and must not repeat an entity: a repeated entity inside a path indicates a cycle that must be reported as a cycle instead.
+  - Aggregated confidence must equal the minimum ordinal of the hops, so a transitive claim can never be stronger than the weakest step in it.
+nonGoals:
+  - This model does not claim that a transitive dependency is transitive at runtime. Reachability through build inputs and reachability through invocation are different and are distinguished by the path's relationship types.
+  - This model does not assert that the path found is the only path between the two entities.

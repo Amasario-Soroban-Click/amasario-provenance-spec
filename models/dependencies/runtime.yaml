@@ -1,0 +1,72 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependencies/runtime
+name: Runtime Dependency Model
+modelKind: relationship
+concept: DEPENDENCY_RUNTIME
+description: >
+  A dependency that exists only while the subject executes, observed from a
+  transaction and its events. The model exists because runtime dependencies are the
+  ones operators actually care about during an incident, and equally because they
+  are unobservable from source: an implementation that never observed an invocation
+  must report that it did not, rather than guessing from an interface.
+schema:
+  id: https://amasario.dev/spec/v1/schema/dependency.schema.json
+  pointer: ''
+fields:
+  - name: source
+    type: object
+    requirement: always
+    description: The contract that performed the invocation.
+  - name: target
+    type: object
+    requirement: always
+    description: The contract invoked.
+  - name: type
+    type: string
+    requirement: always
+    description: Dependency class, which for this model is RUNTIME.
+  - name: basis
+    type: string
+    requirement: always
+    description: How the dependency was established. For this class the basis is OBSERVED_INVOCATION or OBSERVED_EVENT.
+  - name: evidence
+    type: array
+    requirement: always
+    description: Evidence supporting the dependency, invariably a transaction and its events.
+  - name: network
+    type: object
+    requirement: rule
+    description: The network the invocation was observed on. Required for this class by rule dependency/direct-dependency, because an invocation observation is meaningful only relative to a network.
+  - name: firstObserved
+    type: object
+    requirement: rule
+    description: The boundary at which the invocation was first observed. Required for this class by rule dependency/direct-dependency, since for a runtime dependency an observation is the only thing that establishes it.
+  - name: lastObserved
+    type: object
+    requirement: optional
+    description: Latest boundary at which the invocation was observed.
+  - name: confidence
+    type: object
+    requirement: optional
+    description: How strongly the evidence supports the dependency.
+  - name: metadata
+    type: object
+    requirement: optional
+    description: Producer-defined detail, such as the invoked function or the invocation depth.
+relations:
+  - kind: INVOCATES
+    description: The relationship a runtime dependency corresponds to.
+  - kind: OBSERVED_IN
+    description: The relationship tying the observation to the transaction that produced it.
+taxonomies:
+  - dependency-types
+  - evidence-types
+  - network-types
+invariants:
+  - A RUNTIME dependency must be established from an observed transaction or event. It must never be inferred from source alone, because source does not determine what executes.
+  - Evidence for a RUNTIME dependency must come from a successful transaction. An invocation recorded in a failed transaction did not take effect and cannot support the dependency.
+  - A RUNTIME dependency observed once must be reported as observed once, not as a permanent property of the contract.
+nonGoals:
+  - This model does not claim that an unobserved invocation never happens. A bounded observation window supports only what it observed.
+  - This model does not claim that a runtime dependency is a security risk. It records that a call occurred.
