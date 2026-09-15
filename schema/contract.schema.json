@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/contract.schema.json",
+  "title": "Contract Identity",
+  "description": "The canonical identity of a Soroban contract. A contract address alone is deliberately insufficient: the same address on two networks denotes two different contracts, and the same address can host different executables over time as it is upgraded. Complete identity therefore requires the address together with the network it was observed on, the executable it hosted, and the ledger range over which that was observed.",
+  "type": "object",
+  "required": ["contractId", "network", "identityVersion"],
+  "additionalProperties": false,
+  "properties": {
+    "contractId": {
+      "description": "The strkey-encoded contract address. Soroban contract addresses are Stellar strkey values of 56 characters beginning with 'C' (as of the Stellar protocol version current at specification version 1.0.0). The pattern below checks shape only; it does not verify the CRC16 checksum embedded in strkey, which a consumer that needs to reject forged addresses must verify separately.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$",
+      "examples": ["CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE"]
+    },
+    "network": {
+      "description": "The network this identity was observed on. Required, because a contract ID is only unique within a network.",
+      "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+    },
+    "identityVersion": {
+      "description": "The version of this identity record. Increments whenever any identity-defining field changes, such as the executable the address hosts. Two records with the same contractId and different identityVersion are different identities, not conflicting observations of one.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "wasmHash": {
+      "description": "The content hash of the executable this address hosted at this identity version, as reported by the network. This is the field that ties an address to an artifact; without it an address establishes no provenance.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "ledgerSequence": {
+      "description": "The ledger at which this identity was most recently established, such as the ledger containing the deployment or the last upgrade observed.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "firstObservedLedger": {
+      "description": "The earliest ledger at which Amasario observed this address to exist. This is an observation record, not a claim that the contract was created at this ledger: the true creation ledger can be earlier than the earliest ledger an implementation queried.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "lastObservedLedger": {
+      "description": "The latest ledger at which this identity was observed to hold. Must not be less than firstObservedLedger, which is enforced by rule identity/contract-identity rather than expressible in JSON Schema.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+    },
+    "deploymentTransaction": {
+      "description": "The hash of the transaction that created this contract, when it could be identified. Absent means not established, not that no deployment transaction exists.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "deploymentOperation": {
+      "description": "The zero-based index of the operation within the deployment transaction that performed the deployment, where the deployment was established from a transaction with multiple operations. Omitted when the deployment was established from a single-operation transaction or from an upload-and-instantiate pair where the index is not meaningful.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "executableType": {
+      "description": "The kind of executable behind the address, which determines whether a WASM hash is even applicable. A Stellar Asset Contract is a built-in executable and has no user-uploaded WASM, so requiring a WASM hash for every contract would force implementations to invent one.",
+      "enum": ["WASM", "STELLAR_ASSET", "UNKNOWN"]
+    },
+    "upgradeHistory": {
+      "description": "Observed changes of the executable behind this address, in ascending ledger order. Present so that 'the address is the same' cannot be mistaken for 'the executable is the same'.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ledger", "wasmHash"],
+        "additionalProperties": false,
+        "properties": {
+          "ledger": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/ledgerSequence"
+          },
+          "wasmHash": {
+            "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+          },
+          "evidence": {
+            "description": "Evidence references supporting this upgrade observation.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "description": "Evidence references supporting the fields of this identity record.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}

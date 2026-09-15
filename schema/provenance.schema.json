@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/provenance.schema.json",
+  "title": "Amasario Provenance Document",
+  "description": "A complete provenance record for a Soroban contract: its identity, the artifacts and source it came from, the evidence supporting those claims, and the confidence and verification outcome for each claim. This schema is also the home of the shared Amasario envelope definitions in $defs, because it is the top-level document of the specification and therefore the natural place for the fields every other document inherits.",
+  "type": "object",
+  "required": ["apiVersion", "specVersion", "contract", "evidence", "confidence", "verificationStatus", "boundary"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "$ref": "#/$defs/apiVersion"
+    },
+    "specVersion": {
+      "$ref": "#/$defs/specVersion"
+    },
+    "contract": {
+      "description": "The contract identity this document is about.",
+      "$ref": "https://amasario.dev/spec/v1/schema/contract.schema.json"
+    },
+    "wasm": {
+      "description": "The deployed WebAssembly identity, when it could be established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/wasm.schema.json"
+    },
+    "source": {
+      "description": "The source provenance of the deployed artifact, when it could be established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/source.schema.json"
+    },
+    "build": {
+      "description": "The build provenance of the deployed artifact, when it could be established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/build.schema.json"
+    },
+    "artifacts": {
+      "description": "Every artifact participating in this provenance chain, including inputs and outputs.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json"
+      }
+    },
+    "deployment": {
+      "description": "The deployment that made an executable into this contract.",
+      "$ref": "https://amasario.dev/spec/v1/schema/deployment.schema.json"
+    },
+    "dependencies": {
+      "description": "The dependency relationships known for this contract.",
+      "$ref": "https://amasario.dev/spec/v1/schema/dependency-set.schema.json"
+    },
+    "evidence": {
+      "description": "Every evidence record supporting any claim in this document. At least one record is required: a provenance document with no evidence can make no claim at all, so an empty evidence set is a malformed document rather than a weakly supported one.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/evidence.schema.json"
+      }
+    },
+    "confidence": {
+      "description": "How strongly the evidence supports the overall provenance claim.",
+      "$ref": "https://amasario.dev/spec/v1/schema/confidence.schema.json"
+    },
+    "verificationStatus": {
+      "description": "The outcome of comparing the provenance claim against the available evidence. CONFLICTING takes precedence over every other value.",
+      "enum": ["VERIFIED", "PARTIALLY_VERIFIED", "UNVERIFIED", "CONFLICTING", "UNKNOWN"]
+    },
+    "impact": {
+      "description": "Impact findings produced from the dependency and provenance relationships in this document.",
+      "type": "array",
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/impact.schema.json"
+      }
+    },
+    "boundary": {
+      "description": "The network and ledger boundary within which every observation in this document was made. A claim without a boundary is not reproducible, so this field is required.",
+      "$ref": "#/$defs/observationBoundary"
+    },
+    "engineVersion": {
+      "description": "The version of the Amasario engine that produced this document, when it was produced by an implementation rather than authored by hand.",
+      "$ref": "#/$defs/semver"
+    },
+    "generatedAt": {
+      "description": "When this document was produced. Not part of any digest.",
+      "$ref": "#/$defs/timestamp"
+    },
+    "notes": {
+      "description": "Free-text operator notes. Never machine-interpreted and never evidence.",
+      "type": "string",
+      "maxLength": 4096
+    }
+  },
+  "$defs": {
+    "apiVersion": {
+      "description": "The major-version compatibility family. A consumer MUST reject a document whose apiVersion it does not recognise before interpreting any field, including unknown fields.",
+      "type": "string",
+      "const": "amasario.dev/v1"
+    },
+    "specVersion": {
+      "description": "The normative specification version that produced this document, as SemVer. A consumer that supports 1.0.0 must accept 1.4.2 and must reject 2.0.0.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+      "examples": ["1.0.0"]
+    },
+    "semver": {
+      "description": "A Semantic Versioning 2.0.0 version string.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "timestamp": {
+      "description": "An RFC 3339 date-time in UTC. Amasario timestamps are observations and are never used to order entities, because clock skew would make ordering non-deterministic.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "ledgerSequence": {
+      "description": "A Stellar ledger sequence number. Non-negative, monotonically increasing per network, and reset to genesis when Testnet or Futurenet is reset, which is why a ledger number is only meaningful together with a network.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "digest": {
+      "description": "A content digest. The value is meaningless without the algorithm and the content it was computed over, so all three are required for a digest to be usable as identity.",
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "description": "The hash algorithm. Only algorithms named here may be used; an implementation MUST NOT introduce a locally chosen algorithm because that would make digests incomparable across implementations.",
+          "enum": ["sha256", "sha512"]
+        },
+        "value": {
+          "description": "The lowercase hex-encoded digest value.",
+          "type": "string",
+          "pattern": "^[0-9a-f]+$"
+        },
+        "encoding": {
+          "description": "How the value is encoded. Absent means hex, which is the only encoding whose lowercase form is canonical here.",
+          "enum": ["hex"]
+        }
+      }
+    },
+    "entityKind": {
+      "description": "The kinds of entity that can appear as a node in an Amasario graph and as an endpoint of a relationship. This set is shared with graph.schema.json and must remain identical to it.",
+      "enum": ["CONTRACT", "WASM", "SOURCE", "BUILD", "ARTIFACT", "DEPLOYMENT", "PACKAGE", "TRANSACTION"]
+    },
+    "entityRef": {
+      "description": "A reference to an entity by kind and identifier. A reference is deliberately not an inline copy: two places that embed the same entity independently could disagree, whereas a reference cannot.",
+      "type": "object",
+      "required": ["kind", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/entityKind"
+        },
+        "id": {
+          "description": "The entity's identifier, whose form is defined by the entity's own schema (for example a strkey contract ID, a digest value, or a transaction hash).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "digest": {
+          "description": "The content digest of the referenced entity, when known. Including it lets a consumer detect that the reference has drifted.",
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "observationBoundary": {
+      "description": "The point at which observations were made. Amasario treats a boundary as part of the claim, not as metadata: the same query at a later boundary is a different analysis and may legitimately produce a different answer.",
+      "type": "object",
+      "required": ["network", "ledger", "observedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "network": {
+          "description": "The network the boundary is expressed against.",
+          "$ref": "https://amasario.dev/spec/v1/schema/network.schema.json"
+        },
+        "ledger": {
+          "description": "The inclusive ledger sequence the observation was bounded by.",
+          "$ref": "#/$defs/ledgerSequence"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "specVersion": {
+          "description": "The specification version in force when the observation was made, when it differs from the document's own specVersion.",
+          "$ref": "#/$defs/specVersion"
+        }
+      }
+    },
+    "evidenceRef": {
+      "description": "A reference to an evidence record by id. Every claim that cites evidence does so by reference, so a single evidence record can support several claims without being duplicated.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  }
+}

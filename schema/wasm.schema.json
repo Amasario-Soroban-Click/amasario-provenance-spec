@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/wasm.schema.json",
+  "title": "WASM Identity",
+  "description": "Deterministic identity for a deployed WebAssembly executable. The model deliberately keeps six things distinct that are commonly conflated: the contract address that hosts the executable, the hash of the deployed executable, the source repository it may have come from, the source revision, the build artifact, and the build configuration. Source identity and deployed executable identity are not automatically equivalent; establishing that they correspond is precisely what provenance verification does, and it is allowed to fail.",
+  "type": "object",
+  "required": ["hash"],
+  "additionalProperties": false,
+  "properties": {
+    "hash": {
+      "description": "The content hash of the deployed executable. Per artifact-types, a WASM artifact is identified by sha256, which is also the algorithm the Stellar network uses to report a contract's executable hash.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "contractId": {
+      "description": "The contract address this executable was observed at, when the identity is recorded from a network observation. Optional because a WASM identity can also be recorded for an executable that has not been deployed.",
+      "type": "string",
+      "pattern": "^C[A-Z2-7]{55}$"
+    },
+    "sizeBytes": {
+      "description": "The size of the executable in bytes, when reported by the network. Recorded as a cheap drift check: a matching hash with a mismatching size would indicate a faulty observation.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "sourceRepository": {
+      "description": "The source repository this executable is claimed to have been built from. A claim, not a fact: it is only established once source and build evidence agree with the deployed hash.",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "sourceRevision": {
+      "description": "The source revision claimed for this executable. Recorded separately from the repository because a repository can be rewritten, moved or deleted while a revision digest cannot.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "buildArtifact": {
+      "description": "The build artifact this executable was produced as, when the chain from source through build to executable has been established.",
+      "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json"
+    },
+    "buildConfiguration": {
+      "description": "The build configuration claimed for this executable, as an opaque but stable reference (for example a digest of the build profile and lockfile). Kept opaque because Amasario models the relationship, not the toolchain, but digest-addressed so that two 'different' configurations cannot silently be treated as one.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "deploymentTransaction": {
+      "description": "The transaction that deployed this executable, when established. Together with contractId this is what makes a deployed identity reproducible from the chain rather than from a local build.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "reproducible": {
+      "description": "Whether the executable is claimed to be reproducible from the declared source and build configuration, and on what basis. Absent means the question was not answered, which must not be read as 'not reproducible'.",
+      "enum": ["REPRODUCED", "NOT_REPRODUCED", "NOT_ATTEMPTED"]
+    },
+    "evidence": {
+      "description": "Evidence references supporting this identity claim.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}
