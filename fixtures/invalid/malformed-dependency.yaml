@@ -1,0 +1,119 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: invalid/malformed-dependency
+kind: invalid
+synthetic: true
+description: >
+  Dependency records that must be rejected. The cases are chosen around the fields
+  that carry the specification's central promise: a dependency without a basis, without
+  evidence or with an unrecognised class is exactly the kind of claim Amasario exists
+  to prevent from being asserted.
+cases:
+  - id: missing-basis
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: A dependency with no basis cannot be distinguished from a guess, so the missing required property must be reported at the root.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: CONTRACT
+      evidence:
+        - ev_invocation_beta_gamma
+
+  - id: empty-evidence
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: An empty evidence array is a malformed dependency rather than a weakly supported one, so the minimum length must be enforced.
+    expectedError:
+      keyword: minItems
+      path: /evidence
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: CONTRACT
+      basis: OBSERVED_INVOCATION
+      evidence: []
+
+  - id: unknown-dependency-class
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: A dependency class outside the taxonomy must be rejected rather than treated as an unknown class, because a consumer cannot decide which evidence requirement applies.
+    expectedError:
+      keyword: enum
+      path: /type
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: PROBABLY_RELATED
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_beta_gamma
+
+  - id: unknown-basis
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: An unrecognised basis must be rejected, because the basis is what orders the strength of the evidence and an unknown strength cannot be ordered.
+    expectedError:
+      keyword: enum
+      path: /basis
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: CONTRACT
+      basis: BECAUSE_THEY_ARE_SIMILAR
+      evidence:
+        - ev_invocation_beta_gamma
+
+  - id: confidence-without-evidence
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: A confidence object with no evidence is an opinion, so the nested required property must be enforced to keep confidence derived rather than asserted.
+    expectedError:
+      keyword: required
+      path: /confidence
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: CONTRACT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_beta_gamma
+      confidence:
+        level: VERIFIED
+
+  - id: unspecified-property-present
+    target: https://amasario.dev/spec/v1/schema/dependency.schema.json
+    description: An unrecognised dependency property must be rejected. A field like this is how a producer would smuggle in an unsupported claim such as a safety assertion.
+    expectedError:
+      keyword: additionalProperties
+      path: ''
+    document:
+      source:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      target:
+        kind: CONTRACT
+        id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+      type: CONTRACT
+      basis: OBSERVED_INVOCATION
+      evidence:
+        - ev_invocation_beta_gamma
+      severityScore: 9

@@ -1,0 +1,246 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: invalid/invalid-provenance
+kind: invalid
+synthetic: true
+description: >
+  Provenance documents that must be rejected. These cases protect the invariants the
+  specification treats as non-negotiable: a document must carry evidence, every
+  evidence record must carry what its class requires, the verification status must be
+  a known state, and the document must declare which compatibility family and
+  observation boundary it belongs to.
+cases:
+  - id: no-evidence-array
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: A provenance document with no evidence field at all can support no claim, so the missing required property must be reported at the root.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev_placeholder
+      verificationStatus: UNVERIFIED
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'
+
+  - id: empty-evidence-array
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: An empty evidence array is a malformed document rather than a weakly supported one, which is the structural form of the requirement that no claim exists without evidence.
+    expectedError:
+      keyword: minItems
+      path: /evidence
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence: []
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev_placeholder
+      verificationStatus: UNVERIFIED
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'
+
+  - id: unknown-verification-status
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: A verification status outside the closed enumeration must be rejected, because a consumer aggregating statuses cannot order an unrecognised state and might otherwise treat it as success.
+    expectedError:
+      keyword: enum
+      path: /verificationStatus
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence:
+        - id: ev1
+          type: OBSERVATION
+          claim: The observable executable hash was read for this contract at the stated boundary.
+          observedAt: '2026-01-15T12:00:00Z'
+          observationNote: The executable hash was returned by the network for the contract address.
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev1
+      verificationStatus: PROBABLY_FINE
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'
+
+  - id: transaction-evidence-without-success-flag
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: A TRANSACTION evidence record that omits the success flag must be rejected, because that flag is what prevents a failed transaction from being cited as evidence that its intended effect occurred.
+    expectedError:
+      keyword: required
+      path: /evidence/0
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence:
+        - id: ev_deploy
+          type: TRANSACTION
+          claim: The deployment transaction for this contract was recorded at the stated ledger.
+          observedAt: '2026-01-15T12:00:00Z'
+          transactionHash: 00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712
+          ledger: 1234567
+          boundary:
+            network:
+              id: testnet
+              type: TESTNET
+              passphrase: 'Test SDF Network ; September 2015'
+            ledger: 1234567
+            observedAt: '2026-01-15T12:00:00Z'
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev_deploy
+      verificationStatus: UNVERIFIED
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'
+
+  - id: missing-observation-boundary
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: A document without an observation boundary is not reproducible, so the missing required property must be reported at the root rather than defaulted.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence:
+        - id: ev1
+          type: OBSERVATION
+          claim: The observable executable hash was read for this contract at the stated boundary.
+          observedAt: '2026-01-15T12:00:00Z'
+          observationNote: The executable hash was returned by the network for the contract address.
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev1
+      verificationStatus: UNVERIFIED
+
+  - id: malformed-spec-version
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: A specification version that is not a three-part semantic version cannot be compared against a supported range, so the pattern must be enforced.
+    expectedError:
+      keyword: pattern
+      path: /specVersion
+    document:
+      apiVersion: amasario.dev/v1
+      specVersion: '1.0'
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence:
+        - id: ev1
+          type: OBSERVATION
+          claim: The observable executable hash was read for this contract at the stated boundary.
+          observedAt: '2026-01-15T12:00:00Z'
+          observationNote: The executable hash was returned by the network for the contract address.
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev1
+      verificationStatus: UNVERIFIED
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'
+
+  - id: unknown-api-version-family
+    target: https://amasario.dev/spec/v1/schema/provenance.schema.json
+    description: An unrecognised apiVersion must be rejected before any other field is interpreted. This is the case that stops a v2 document from being analysed as if it were a v1 document.
+    expectedError:
+      keyword: const
+      path: /apiVersion
+    document:
+      apiVersion: amasario.dev/v2
+      specVersion: 1.0.0
+      contract:
+        contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        identityVersion: 1
+      evidence:
+        - id: ev1
+          type: OBSERVATION
+          claim: The observable executable hash was read for this contract at the stated boundary.
+          observedAt: '2026-01-15T12:00:00Z'
+          observationNote: The executable hash was returned by the network for the contract address.
+      confidence:
+        level: UNKNOWN
+        evidence:
+          - ev1
+      verificationStatus: UNVERIFIED
+      boundary:
+        network:
+          id: testnet
+          type: TESTNET
+          passphrase: 'Test SDF Network ; September 2015'
+        ledger: 1234567
+        observedAt: '2026-01-15T12:00:00Z'

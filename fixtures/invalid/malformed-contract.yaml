@@ -1,0 +1,107 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: invalid/malformed-contract
+kind: invalid
+synthetic: true
+description: >
+  Contract identity instances that must be rejected, each declaring the exact keyword
+  and path at which rejection is expected. The cases cover a missing identifier, a
+  malformed address, an unknown executable type, a mistyped field, an unspecified
+  property and a network descriptor missing its passphrase, which between them are
+  the shapes a hand-written identity record goes wrong in.
+cases:
+  - id: missing-contract-id
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: A contract identity with no address cannot identify anything, so the missing required property must be reported at the document root.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+      identityVersion: 1
+      evidence:
+        - ev_wasm_alpha
+
+  - id: malformed-contract-address
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: An address that is not a 56-character strkey beginning with C is not a contract address at all, and must fail the pattern rather than be accepted as an opaque identifier.
+    expectedError:
+      keyword: pattern
+      path: /contractId
+    document:
+      contractId: NOTACONTRACTADDRESS
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+      identityVersion: 1
+      evidence:
+        - ev_wasm_alpha
+
+  - id: unknown-executable-type
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: An executable type outside the enumeration must be rejected, because a consumer deciding whether a WASM hash is applicable cannot act on an unrecognised kind.
+    expectedError:
+      keyword: enum
+      path: /executableType
+    document:
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+      identityVersion: 1
+      executableType: EVM_BYTECODE
+      evidence:
+        - ev_wasm_alpha
+
+  - id: identity-version-not-an-integer
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: An identity version carrying a version string rather than a monotonic integer cannot be compared, so the type must be enforced.
+    expectedError:
+      keyword: type
+      path: /identityVersion
+    document:
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+      identityVersion: v1
+      evidence:
+        - ev_wasm_alpha
+
+  - id: unspecified-property-present
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: An unrecognised property must be rejected rather than ignored, because a silently dropped field is indistinguishable from a correctly handled one.
+    expectedError:
+      keyword: additionalProperties
+      path: ''
+    document:
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      network:
+        id: testnet
+        type: TESTNET
+        passphrase: 'Test SDF Network ; September 2015'
+      identityVersion: 1
+      isSafeContract: true
+      evidence:
+        - ev_wasm_alpha
+
+  - id: network-without-passphrase
+    target: https://amasario.dev/spec/v1/schema/contract.schema.json
+    description: A network descriptor without a passphrase cannot identify a Stellar network, so the nested required property must be enforced rather than only the top-level ones.
+    expectedError:
+      keyword: required
+      path: /network
+    document:
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      network:
+        id: testnet
+        type: TESTNET
+      identityVersion: 1
+      evidence:
+        - ev_wasm_alpha

@@ -1,0 +1,135 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: invalid/broken-edge
+kind: invalid
+synthetic: true
+description: >
+  Graph edges that must be rejected. An edge is the atomic unit of the dependency
+  graph, so the cases concentrate on the four things an edge cannot be missing or
+  cannot get wrong: its relationship, its evidence, its confidence and the shape of
+  its endpoints.
+cases:
+  - id: missing-relationship
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: An edge with no relationship type asserts that two entities are connected without saying how, which is not a claim the model can carry.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+
+  - id: unknown-relationship-type
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: A relationship outside the closed taxonomy must be rejected, because impact propagation is derived from the relationship's declared propagation semantics and an unknown term has none.
+    expectedError:
+      keyword: enum
+      path: /relationship
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: MENTIONS
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+
+  - id: empty-edge-evidence
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: An edge with an empty evidence array is not a weaker edge, it is not an edge, so the minimum length must be enforced.
+    expectedError:
+      keyword: minItems
+      path: /evidence
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      evidence: []
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+
+  - id: missing-edge-confidence
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: An edge with no confidence cannot be aggregated into a path, because aggregation depends on the ordinals of every step.
+    expectedError:
+      keyword: required
+      path: ''
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      evidence:
+        - ev_invocation_alpha_beta
+
+  - id: malformed-edge-endpoint
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: An endpoint whose kind is outside the entity enumeration must be rejected. Accepting an arbitrary kind would let an edge point at something that is not a modelled entity and could never be resolved.
+    expectedError:
+      keyword: enum
+      path: /target/kind
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: DEPENDENCY
+        id: something_not_modelled
+      relationship: INVOCATES
+      evidence:
+        - ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
+
+  - id: evidence-reference-is-not-a-list
+    target: https://amasario.dev/spec/v1/schema/dependency-edge.schema.json
+    description: A single evidence reference supplied where an array is required must be rejected, because a schema that silently accepts either shape cannot be relied on to count evidence correctly.
+    expectedError:
+      keyword: type
+      path: /evidence
+    document:
+      id: edge_alpha_beta
+      source:
+        kind: CONTRACT
+        id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      target:
+        kind: CONTRACT
+        id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+      relationship: INVOCATES
+      evidence: ev_invocation_alpha_beta
+      confidence:
+        level: HIGH_CONFIDENCE
+        evidence:
+          - ev_invocation_alpha_beta
