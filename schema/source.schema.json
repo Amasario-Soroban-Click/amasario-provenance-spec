@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/source.schema.json",
+  "title": "Source Provenance",
+  "description": "Where the source of a deployed artifact is claimed to have come from, and what supports that claim. Source provenance is the weakest link in most real provenance chains, so the model is explicit about which parts are established by a digest and which are established only by a name: a commit digest is a fact, a branch name is a hint.",
+  "type": "object",
+  "required": ["repositoryUrl", "revision"],
+  "additionalProperties": false,
+  "properties": {
+    "repositoryUrl": {
+      "description": "The canonical URL of the source repository.",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "repositoryName": {
+      "description": "The human-readable repository name, for reporting only. Never used for matching, because two projects with the same name must not be treated as related.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "revision": {
+      "description": "The source revision, typically a Git commit digest. Treated as an opaque string because Amasario does not require a particular version control system, but a revision that is a 40- or 64-character hex digest is the only kind that can support a VERIFIED status.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "ref": {
+      "description": "The mutable reference the revision was resolved from, where one exists. Recorded to make it visible that the revision was reached through a mutable name, which is why a branch-resolved revision cannot by itself support a VERIFIED status.",
+      "type": "object",
+      "required": ["type", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": ["branch", "tag", "detached"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "artifactDigest": {
+      "description": "The digest of the source archive corresponding to this revision, where the archive is itself reproducible. Kept distinct from the revision because an archive digest also covers packaging, so the two establish different things.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "timestamp": {
+      "description": "The timestamp associated with the revision, as reported by the source host. An observation about the host's record, not a proof of when the code was written.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/timestamp"
+    },
+    "license": {
+      "description": "The declared licence of the source, when it could be read from the repository. Declared metadata only: Amasario does not assess licence compatibility and must not be read as doing so.",
+      "type": "string",
+      "maxLength": 128
+    },
+    "buildRelationship": {
+      "description": "How this source relates to the build that consumed it, which is what makes the source-to-build link reviewable rather than assumed.",
+      "enum": ["BUILT_BY_DECLARED_BUILD", "BUILT_BY_INFERRED_BUILD", "NOT_LINKED", "UNKNOWN"]
+    },
+    "evidence": {
+      "description": "Evidence references supporting this source claim.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}

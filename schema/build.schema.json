@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/build.schema.json",
+  "title": "Build Provenance",
+  "description": "How an artifact was produced from source. Build provenance is what turns an unverifiable claim ('this WASM came from that repository') into a checkable one, but only when the toolchain, configuration and inputs are recorded precisely enough to be re-run. Fields that cannot be established must be omitted rather than filled with a plausible default; a wrong toolchain version is worse than an absent one.",
+  "type": "object",
+  "required": ["sourceRevision"],
+  "additionalProperties": false,
+  "properties": {
+    "sourceRevision": {
+      "description": "The source revision this build consumed. Duplicated from source.schema.json deliberately: a build record is meaningful on its own, and requiring a consumer to fetch the source record to learn the build's input would make the two silently divergable.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "toolchain": {
+      "description": "The compiler and toolchain identity used for the build.",
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The toolchain name, for example the compiler used to produce a Soroban contract.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "description": "The exact toolchain version. A version range or a floating channel is not acceptable here, because it cannot distinguish two builds that produced different output.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "target": {
+          "description": "The compilation target triple, where the toolchain is target-parameterised.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "components": {
+          "description": "Additional components that affect output, for example lint or optimisation plugins.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "configuration": {
+      "description": "The build configuration, recorded as resolvable values plus an opaque digest over the whole. The digest is what allows two configurations to be compared without Amasario modelling every toolchain in existence.",
+      "type": "object",
+      "required": ["digest"],
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+        },
+        "profile": {
+          "description": "The named build profile, for example a release or optimisation profile.",
+          "type": "string",
+          "maxLength": 128
+        },
+        "flags": {
+          "description": "Compilation flags that materially affect output.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          }
+        },
+        "environment": {
+          "description": "Build environment metadata where available. Values that could carry a secret must never be recorded here; environment contents are operator-supplied and Amasario treats them as untrusted input.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 1024
+          }
+        }
+      }
+    },
+    "lockfile": {
+      "description": "The dependency lock information the build resolved against. Present because a declared dependency set does not determine what was actually compiled; the lockfile does.",
+      "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json"
+    },
+    "target": {
+      "description": "The build target artifact kind this build was expected to produce.",
+      "enum": ["WASM", "BUILD_ARTIFACT", "SOURCE_ARCHIVE", "OTHER"]
+    },
+    "artifact": {
+      "description": "The artifact this build produced.",
+      "$ref": "https://amasario.dev/spec/v1/schema/artifact.schema.json"
+    },
+    "artifactDigest": {
+      "description": "The digest of the produced artifact, repeated at this level so that a build whose artifact record has been lost is still comparable against a deployed hash.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "reproducibility": {
+      "description": "What is known about whether this build reproduces. The distinction between NOT_REPRODUCED and NOT_ATTEMPTED is load-bearing: reporting an unattempted build as non-reproducible would be a false negative that discourages verification.",
+      "enum": ["REPRODUCED", "REPRODUCED_BY_THIRD_PARTY", "NOT_REPRODUCED", "NOT_ATTEMPTED", "UNKNOWN"]
+    },
+    "attestations": {
+      "description": "Attestations referring to this build, by id. An attestation is evidence about a claim; it is never a property of the build itself, so it is referenced rather than embedded.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "evidence": {
+      "description": "Evidence references supporting this build claim.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}

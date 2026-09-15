@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amasario.dev/spec/v1/schema/artifact.schema.json",
+  "title": "Artifact",
+  "description": "A content- or revision-addressable object participating in provenance. Artifacts are the entities derivations move between: a source archive and a lockfile are inputs, a build artifact is an intermediate, and a WASM is an output that may itself become a deployment artifact. Every artifact carries identity, type, digest where required, its parent derivation and the evidence supporting it.",
+  "type": "object",
+  "required": ["id", "type", "digest"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "The artifact's identifier within the producing document. Stable and unique within the document, so that two references to the same artifact resolve to the same object.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "type": {
+      "description": "The artifact class. Constrained to artifact-types; an unknown term requires the consumer to treat the artifact as UNKNOWN rather than to guess a class.",
+      "enum": ["SOURCE_ARCHIVE", "LOCKFILE", "BUILD_ARTIFACT", "WASM", "DEPLOYMENT_ARTIFACT"]
+    },
+    "digest": {
+      "description": "The content digest. Required for every artifact type in this version, because an artifact whose content is not addressed by a digest cannot participate in an identity comparison and would therefore make every claim about it unfalsifiable.",
+      "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/digest"
+    },
+    "sizeBytes": {
+      "description": "The artifact size in bytes, where known.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "mediaType": {
+      "description": "The IANA media type of the artifact, where known. Informational; never used for matching.",
+      "type": "string",
+      "maxLength": 255
+    },
+    "locator": {
+      "description": "Where the artifact was retrieved from, when retrieval is how it was established. Recorded so the evidence can be independently revisited, while never being treated as identity.",
+      "type": "string",
+      "format": "uri-reference",
+      "maxLength": 2048
+    },
+    "parent": {
+      "description": "The artifact this artifact was directly derived from, when the derivation is one-to-one. For derivations with several inputs, use inputs.",
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "derivation": {
+          "description": "How the parent produced this artifact.",
+          "enum": ["BUILT_FROM", "DERIVED_FROM", "PACKAGED_FROM", "UPLOADED_FROM"]
+        }
+      }
+    },
+    "inputs": {
+      "description": "Every input that contributed to this artifact. Recorded as a set rather than a chain because a real build has several inputs (source, lockfile, configuration) and collapsing them to one parent loses the information verification needs.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "type": {
+            "description": "The input artifact's class. References this schema's own enumeration so the two cannot drift.",
+            "$ref": "#/properties/type"
+          },
+          "derivation": {
+            "enum": ["BUILT_FROM", "DERIVED_FROM", "PACKAGED_FROM", "UPLOADED_FROM"]
+          }
+        }
+      }
+    },
+    "derived": {
+      "description": "Artifacts directly produced from this artifact.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "reproducible": {
+      "description": "Whether this artifact's digest reproduces from the same inputs and configuration.",
+      "enum": ["REPRODUCED", "NOT_REPRODUCED", "NOT_ATTEMPTED", "UNKNOWN"]
+    },
+    "evidence": {
+      "description": "Evidence references supporting this artifact's existence and identity.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://amasario.dev/spec/v1/schema/provenance.schema.json#/$defs/evidenceRef"
+      }
+    }
+  }
+}
