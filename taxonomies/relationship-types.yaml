@@ -1,0 +1,132 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: relationship-types
+name: Relationship Types
+openness: closed
+consumersMustHandleUnknown: false
+changeClass: normative
+description: >
+  The exhaustive set of typed relationships that Amasario may assert between two
+  entities. A relationship is always directed: `subject RELATIONSHIP object`, and
+  the meaning of the arrow is fixed by this taxonomy rather than by context.
+
+  Each term declares the entity kinds it may connect (`subjectTypes`,
+  `objectTypes`) and, critically, `changePropagation`, which states which
+  direction a change travels. Impact analysis is derived from
+  `changePropagation`; it is never inferred from the name of the relationship.
+terms:
+  - id: DEPENDS_ON
+    label: depends on
+    description: >
+      The subject requires the object in order to function or to be built. The
+      requirement MUST be supported by evidence; shared naming, shared
+      ecosystem membership or mutual mention is explicitly insufficient (see
+      rule dependency/direct-dependency).
+    subjectTypes: [CONTRACT, WASM, ARTIFACT, PACKAGE, BUILD]
+    objectTypes: [CONTRACT, WASM, ARTIFACT, PACKAGE, SOURCE]
+    changePropagation: object_to_subject
+    propagationRationale: >
+      A change to the object may break or alter the subject, so dependents are
+      candidates for impact.
+    introducedIn: 1.0.0
+  - id: INVOCATES
+    label: invocates
+    description: >
+      The subject contract made a cross-contract call into the object contract.
+      This relationship is only assertable from an observed transaction or
+      invocation record; it MUST NOT be asserted from interface similarity.
+    subjectTypes: [CONTRACT]
+    objectTypes: [CONTRACT]
+    changePropagation: object_to_subject
+    propagationRationale: >
+      A change to the callee's interface or behaviour can break the caller.
+    introducedIn: 1.0.0
+  - id: BUILT_FROM
+    label: built from
+    description: >
+      The subject build produced the subject from the object source revision.
+      This is the join between source provenance and build provenance.
+    subjectTypes: [BUILD, ARTIFACT, WASM]
+    objectTypes: [SOURCE]
+    changePropagation: object_to_subject
+    propagationRationale: >
+      A change to the source revision invalidates the build that was produced
+      from it, and therefore everything derived from that build.
+    introducedIn: 1.0.0
+  - id: DERIVED_FROM
+    label: derived from
+    description: >
+      The subject artifact was mechanically produced from the object entity
+      (for example a WASM compiled from a build artifact, or a build artifact
+      produced from a source archive and a lockfile).
+    subjectTypes: [ARTIFACT, WASM, BUILD]
+    objectTypes: [ARTIFACT, SOURCE, BUILD]
+    changePropagation: object_to_subject
+    propagationRationale: >
+      A change to the input of a deterministic derivation changes the output,
+      which is exactly the property a digest match relies on.
+    introducedIn: 1.0.0
+  - id: DEPLOYED_AS
+    label: deployed as
+    description: >
+      Relates an executable artifact to the contract address it was deployed
+      as, or a contract address to the deployment record that created it. Both
+      directions are valid instances of the same relationship because the
+      deployment record and the contract address are two observations of one
+      event.
+    subjectTypes: [WASM, ARTIFACT, CONTRACT]
+    objectTypes: [CONTRACT, DEPLOYMENT]
+    changePropagation: object_to_subject
+    propagationRationale: >
+      A change to the deployment record (for example a re-deployment with a
+      different WASM) changes what the deployed subject actually is.
+    introducedIn: 1.0.0
+  - id: OBSERVED_IN
+    label: observed in
+    description: >
+      The subject fact was observed in the object transaction. This relationship
+      records the provenance of an observation itself and is what allows a claim
+      to be traced back to a verifiable ledger event.
+    subjectTypes: [CONTRACT, WASM, ARTIFACT, DEPLOYMENT]
+    objectTypes: [TRANSACTION]
+    changePropagation: none
+    propagationRationale: >
+      Observation is not dependency. A new transaction observing the same fact
+      does not change the fact, so impact MUST NOT propagate through
+      OBSERVED_IN edges.
+    introducedIn: 1.0.0
+  - id: VERIFIED_BY
+    label: verified by
+    description: >
+      The object entity is the entity whose digest or revision establishes the
+      subject's provenance claim. For example a deployed WASM is VERIFIED_BY the
+      build artifact whose digest matches it.
+    subjectTypes: [CONTRACT, WASM, ARTIFACT, DEPLOYMENT, SOURCE, BUILD]
+    objectTypes: [BUILD, ARTIFACT, SOURCE, WASM]
+    changePropagation: none
+    propagationRationale: >
+      Verification supports or refutes a claim; it does not create a dependency.
+      Propagating impact through VERIFIED_BY would make a re-verification look
+      like a change, so propagation is prohibited.
+    introducedIn: 1.0.0
+  - id: AFFECTS
+    label: affects
+    description: >
+      An explicitly declared impact edge: a change to the subject is asserted to
+      affect the object. Unlike the dependency relationships above, this
+      relationship is the assertion of impact itself rather than a fact from
+      which impact is derived.
+    subjectTypes: [CONTRACT, WASM, ARTIFACT, PACKAGE, SOURCE, BUILD, DEPLOYMENT]
+    objectTypes: [CONTRACT, WASM, ARTIFACT, PACKAGE, DEPLOYMENT]
+    changePropagation: subject_to_object
+    propagationRationale: >
+      The arrow already points from the changed entity to the affected entity,
+      so it propagates in its own direction without inversion.
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/dependency-edge.schema.json
+    pointer: /properties/relationship
+  - file: schema/graph.schema.json
+    pointer: /$defs/edge/properties/relationship
+  - file: schema/impact-path.schema.json
+    pointer: /$defs/step/properties/relationship
