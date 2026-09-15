@@ -1,0 +1,42 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: identity/contract/basic
+domain: identity
+operation: contract-identity-key
+deterministic: true
+description: >
+  Derives the stable identity key of a contract identity and its normalised form. The
+  key is composed of the specification version family, the entity kind, the network
+  and the address, and deliberately excludes the executable hash: a change of
+  executable is a change of identity version, not a change of identity, so that an
+  upgrade does not appear as a new contract. A consumer in the engine repository is
+  expected to reproduce this key byte for byte.
+input:
+  contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+  network:
+    id: testnet
+    type: TESTNET
+    passphrase: 'Test SDF Network ; September 2015'
+  identityVersion: 1
+  wasmHash:
+    algorithm: sha256
+    value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+expected:
+  result:
+    identityKey: amasario.dev/v1:contract:testnet:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+    identityVersionKey: amasario.dev/v1:contract:testnet:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB#1
+    normalised:
+      apiVersion: amasario.dev/v1
+      contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+      networkId: testnet
+      networkType: TESTNET
+      identityVersion: 1
+      executableHash: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"contractId":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","identityVersion":1,"network":{"id":"testnet","passphrase":"Test SDF Network ; September 2015","type":"TESTNET"},"wasmHash":{"algorithm":"sha256","value":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3"}}
+    inputDigest: sha256:0d8061e417257b812f2b6999c6fd7d5e7c2650451f13939a5e2fd4ecc550b995
+    outputCanonical: |-
+      {"identityKey":"amasario.dev/v1:contract:testnet:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","identityVersionKey":"amasario.dev/v1:contract:testnet:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB#1","normalised":{"apiVersion":"amasario.dev/v1","contractId":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","executableHash":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","identityVersion":1,"networkId":"testnet","networkType":"TESTNET"}}
+    outputDigest: sha256:03b17b7b23909bb89d6a3885214cb271bc6ea569b247f00bcc9aa5529f79c649

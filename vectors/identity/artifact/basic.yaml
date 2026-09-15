@@ -1,0 +1,38 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: identity/artifact/basic
+domain: identity
+operation: artifact-identity-key
+deterministic: true
+description: >
+  Derives the stable identity key of an artifact from its class and content digest.
+  The artifact class is part of the key rather than metadata, because the same bytes
+  are different things depending on what they are claimed to be: a lockfile and a
+  source archive with identical content are not interchangeable, and treating them as
+  one identity would let a resolved dependency set be cited as source evidence.
+input:
+  id: artifact_lockfile
+  type: LOCKFILE
+  digest:
+    algorithm: sha256
+    value: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+  locator: https://example.invalid/artifacts/lockfile
+expected:
+  result:
+    identityKey: amasario.dev/v1:artifact:LOCKFILE:sha256:a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+    normalised:
+      apiVersion: amasario.dev/v1
+      type: LOCKFILE
+      algorithm: sha256
+      digest: a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f
+    excludedFromIdentity:
+      - id
+      - locator
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"digest":{"algorithm":"sha256","value":"a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f"},"id":"artifact_lockfile","locator":"https://example.invalid/artifacts/lockfile","type":"LOCKFILE"}
+    inputDigest: sha256:0aeacdb1ba03a6057eed2b6885166150490192ad479347ff4681b5680a2311ba
+    outputCanonical: |-
+      {"excludedFromIdentity":["id","locator"],"identityKey":"amasario.dev/v1:artifact:LOCKFILE:sha256:a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f","normalised":{"algorithm":"sha256","apiVersion":"amasario.dev/v1","digest":"a7d89450aeb51e4c55ad22947e4171e9ab24addf6e0838f5796ee40f7fe9438f","type":"LOCKFILE"}}
+    outputDigest: sha256:9b5ea6c2976769da8c0837d6793802340b4f3c65b887009c1af1eaf6c14649cd

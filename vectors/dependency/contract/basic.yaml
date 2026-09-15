@@ -1,0 +1,54 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependency/contract/basic
+domain: dependency
+operation: classify-contract-dependency
+deterministic: true
+description: >
+  Classifies a pair of entities into a dependency class from the evidence available.
+  The vector's purpose is to record the decision table explicitly: an observed
+  invocation yields a CONTRACT dependency, a declared manifest entry yields a PACKAGE
+  dependency at declaration strength, and an interface resemblance yields nothing
+  above LOW_CONFIDENCE. An engine that classifies a resemblance as an observed
+  dependency has not merely disagreed about a label, it has invented a relationship.
+input:
+  cases:
+    - name: observed-invocation
+      evidenceClasses:
+        - TRANSACTION
+        - EVENT
+      targetKind: CONTRACT
+    - name: declared-manifest
+      evidenceClasses:
+        - SOURCE
+      targetKind: PACKAGE
+    - name: interface-resemblance
+      evidenceClasses:
+        - OBSERVATION
+      targetKind: CONTRACT
+expected:
+  result:
+    classifications:
+      - name: observed-invocation
+        dependencyClass: CONTRACT
+        basis: OBSERVED_INVOCATION
+        maximumLevel: VERIFIED
+      - name: declared-manifest
+        dependencyClass: PACKAGE
+        basis: DECLARED_MANIFEST
+        maximumLevel: MEDIUM_CONFIDENCE
+      - name: interface-resemblance
+        dependencyClass: CONTRACT
+        basis: INFERRED_INTERFACE
+        maximumLevel: LOW_CONFIDENCE
+    assertions:
+      - A resemblance with only OBSERVATION evidence MUST NOT be classified above LOW_CONFIDENCE.
+      - A declared manifest entry MUST NOT be reported as a resolved dependency.
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"cases":[{"evidenceClasses":["TRANSACTION","EVENT"],"name":"observed-invocation","targetKind":"CONTRACT"},{"evidenceClasses":["SOURCE"],"name":"declared-manifest","targetKind":"PACKAGE"},{"evidenceClasses":["OBSERVATION"],"name":"interface-resemblance","targetKind":"CONTRACT"}]}
+    inputDigest: sha256:3699babfb97ec9e5cb9c2e80906539015387437ddf682f59438c68c72b899fe4
+    outputCanonical: |-
+      {"assertions":["A resemblance with only OBSERVATION evidence MUST NOT be classified above LOW_CONFIDENCE.","A declared manifest entry MUST NOT be reported as a resolved dependency."],"classifications":[{"basis":"OBSERVED_INVOCATION","dependencyClass":"CONTRACT","maximumLevel":"VERIFIED","name":"observed-invocation"},{"basis":"DECLARED_MANIFEST","dependencyClass":"PACKAGE","maximumLevel":"MEDIUM_CONFIDENCE","name":"declared-manifest"},{"basis":"INFERRED_INTERFACE","dependencyClass":"CONTRACT","maximumLevel":"LOW_CONFIDENCE","name":"interface-resemblance"}]}
+    outputDigest: sha256:e9cd99c7c48b3bc2a10476bba7a3fee2febee8c5adb39bdbafc8f6b5c852c987

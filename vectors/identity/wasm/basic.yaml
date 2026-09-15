@@ -1,0 +1,36 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: identity/wasm/basic
+domain: identity
+operation: wasm-identity-key
+deterministic: true
+description: >
+  Derives the stable identity key of a deployed executable from its content hash
+  alone. The key deliberately does not include the contract address or the claimed
+  source revision, because one executable can be deployed at several addresses and the
+  claim that a revision corresponds to it is a separate, falsifiable assertion rather
+  than part of its identity.
+input:
+  hash:
+    algorithm: sha256
+    value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+  contractId: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+  sourceRevision: 5516af291249414332282f5b6655c9033f73e3fc
+expected:
+  result:
+    identityKey: amasario.dev/v1:wasm:sha256:4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    normalised:
+      apiVersion: amasario.dev/v1
+      algorithm: sha256
+      digest: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+    excludedFromIdentity:
+      - contractId
+      - sourceRevision
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"contractId":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","hash":{"algorithm":"sha256","value":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3"},"sourceRevision":"5516af291249414332282f5b6655c9033f73e3fc"}
+    inputDigest: sha256:b43fb09c274e8281f6cedb50e4131919e635495783ba8e6fb83fb636120fe49e
+    outputCanonical: |-
+      {"excludedFromIdentity":["contractId","sourceRevision"],"identityKey":"amasario.dev/v1:wasm:sha256:4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3","normalised":{"algorithm":"sha256","apiVersion":"amasario.dev/v1","digest":"4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3"}}
+    outputDigest: sha256:d4be4debab5509ce5e668ac80a822af981c2fdc2d8ff855f07f2ddf393f7e17c

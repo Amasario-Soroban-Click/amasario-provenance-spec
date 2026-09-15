@@ -1,0 +1,53 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependency/transitive/basic
+domain: dependency
+operation: aggregate-path-confidence
+deterministic: true
+description: >
+  Aggregates the confidence of a two-hop path and normalises the transitive
+  dependency derived from it. The expected result is the minimum ordinal across the
+  hops rather than the maximum, and the vector exists so that both implementations can
+  be shown to agree on a case where the two choices are visibly different. The
+  distinction is not cosmetic: taking the maximum would let a chain be reported as
+  better established than its weakest link.
+input:
+  source:
+    kind: CONTRACT
+    id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+  target:
+    kind: CONTRACT
+    id: C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP
+  path:
+    - kind: CONTRACT
+      id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+  hops:
+    - relationship: INVOCATES
+      level: HIGH_CONFIDENCE
+      evidenceCount: 3
+    - relationship: INVOCATES
+      level: MEDIUM_CONFIDENCE
+      evidenceCount: 1
+expected:
+  result:
+    hops: 2
+    aggregatedLevel: MEDIUM_CONFIDENCE
+    aggregationStrategy: minimum_ordinal
+    inputOrdinals:
+      - 4
+      - 3
+    normalised:
+      type: TRANSITIVE
+      pathLength: 1
+      hopDepth: 2
+      relationshipTypes:
+        - INVOCATES
+        - INVOCATES
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"hops":[{"evidenceCount":3,"level":"HIGH_CONFIDENCE","relationship":"INVOCATES"},{"evidenceCount":1,"level":"MEDIUM_CONFIDENCE","relationship":"INVOCATES"}],"path":[{"id":"CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I","kind":"CONTRACT"}],"source":{"id":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","kind":"CONTRACT"},"target":{"id":"C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP","kind":"CONTRACT"}}
+    inputDigest: sha256:53b2d80eaa9087441772fe1837c21619c70e01c5f164552debb00d077656438f
+    outputCanonical: |-
+      {"aggregatedLevel":"MEDIUM_CONFIDENCE","aggregationStrategy":"minimum_ordinal","hops":2,"inputOrdinals":[4,3],"normalised":{"hopDepth":2,"pathLength":1,"relationshipTypes":["INVOCATES","INVOCATES"],"type":"TRANSITIVE"}}
+    outputDigest: sha256:d4ae5585078b2405f0ad1a1e7ace59ebec7ca5fbe43f4ac771424356b5a151b5

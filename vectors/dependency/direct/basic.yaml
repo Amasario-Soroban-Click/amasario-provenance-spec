@@ -1,0 +1,51 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: dependency/direct/basic
+domain: dependency
+operation: normalise-dependency-edge
+deterministic: true
+description: >
+  Normalises a direct contract dependency into the canonical edge form used by the
+  graph, and derives the change-propagation semantics that impact analysis will use.
+  An engine that reproduces this vector has the same notion of which direction a
+  change travels for an INVOCATES edge, which is the input to every dependents query.
+input:
+  id: edge_alpha_beta
+  source:
+    kind: CONTRACT
+    id: C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB
+  target:
+    kind: CONTRACT
+    id: CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+  relationship: INVOCATES
+  dependencyClass: CONTRACT
+  basis: OBSERVED_INVOCATION
+  evidence:
+    - ev_invocation_alpha_beta
+  confidence:
+    level: HIGH_CONFIDENCE
+    evidence:
+      - ev_invocation_alpha_beta
+  observed: true
+expected:
+  result:
+    edgeKey: amasario.dev/v1:edge:INVOCATES:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB->CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I
+    normalised:
+      id: edge_alpha_beta
+      relationship: INVOCATES
+      dependencyClass: CONTRACT
+      basis: OBSERVED_INVOCATION
+      observed: true
+      confidenceLevel: HIGH_CONFIDENCE
+      evidenceCount: 1
+    changePropagation: object_to_subject
+    traversalForDependents:
+      inverted: true
+  canonicalisation:
+    algorithm: sha256
+    inputCanonical: |-
+      {"basis":"OBSERVED_INVOCATION","confidence":{"evidence":["ev_invocation_alpha_beta"],"level":"HIGH_CONFIDENCE"},"dependencyClass":"CONTRACT","evidence":["ev_invocation_alpha_beta"],"id":"edge_alpha_beta","observed":true,"relationship":"INVOCATES","source":{"id":"C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB","kind":"CONTRACT"},"target":{"id":"CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I","kind":"CONTRACT"}}
+    inputDigest: sha256:2d72cebb54a461143c987335fe72e22deea6bfad75565f04deb1ca8db4eac466
+    outputCanonical: |-
+      {"changePropagation":"object_to_subject","edgeKey":"amasario.dev/v1:edge:INVOCATES:C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB->CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I","normalised":{"basis":"OBSERVED_INVOCATION","confidenceLevel":"HIGH_CONFIDENCE","dependencyClass":"CONTRACT","evidenceCount":1,"id":"edge_alpha_beta","observed":true,"relationship":"INVOCATES"},"traversalForDependents":{"inverted":true}}
+    outputDigest: sha256:9e0aed24b549f9239659dbf58373d970ade9079c7b9512c10a69d65ac5a00d49
