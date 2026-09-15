@@ -70,3 +70,6 @@ aggregation:
     unrelated strong evidence.
   identityElement: VERIFIED
   absorbers: [UNKNOWN]
+usedBy:
+  - file: schema/confidence.schema.json
+    pointer: /properties/level

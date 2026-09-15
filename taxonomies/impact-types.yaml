@@ -1,0 +1,82 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: impact-types
+name: Impact Types
+openness: closed
+consumersMustHandleUnknown: false
+changeClass: normative
+description: >
+  Classifications of a single impact finding. An impact record carries a non-empty
+  set of these terms rather than exactly one, because a single finding is
+  routinely several of them at once: a change reaching a contract three hops away
+  is simultaneously TRANSITIVE, MULTI_HOP and CONTRACT.
+
+  Three families exist and a finding MUST include at least one term from the
+  `distance` family. The `distance` family is derived from `hopDepth` and is
+  therefore mechanically checkable (see rule impact/direct-impact and
+  impact/transitive-impact); the `entity` family classifies what was affected;
+  the `trigger` family classifies the change that caused the finding.
+terms:
+  - id: DIRECT
+    label: direct impact
+    description: >
+      The affected entity is reachable from the changed entity in exactly one
+      hop. A finding whose hopDepth is 1 MUST include this term.
+    family: distance
+    requiredHopDepth: 1
+    introducedIn: 1.0.0
+  - id: TRANSITIVE
+    label: transitive impact
+    description: >
+      The affected entity is reachable from the changed entity in two or more
+      hops. A finding whose hopDepth is greater than 1 MUST include this term.
+    family: distance
+    minimumHopDepth: 2
+    introducedIn: 1.0.0
+  - id: MULTI_HOP
+    label: multi-hop impact
+    description: >
+      The affected entity is reachable in three or more hops. This term is a
+      refinement of TRANSITIVE and is used to distinguish findings whose path
+      length makes the reasoning materially harder to review. A finding whose
+      hopDepth is 3 or greater MUST include this term in addition to TRANSITIVE.
+    family: distance
+    minimumHopDepth: 3
+    introducedIn: 1.0.0
+  - id: ARTIFACT
+    label: artifact impact
+    description: >
+      The affected entity is an artifact (source archive, lockfile, build
+      artifact, WASM or deployment artifact).
+    family: entity
+    affectedKinds: [ARTIFACT, WASM]
+    introducedIn: 1.0.0
+  - id: CONTRACT
+    label: contract impact
+    description: >
+      The affected entity is a contract identity. Requires `affectedKinds` of
+      CONTRACT in the finding.
+    family: entity
+    affectedKinds: [CONTRACT]
+    introducedIn: 1.0.0
+  - id: DEPLOYMENT
+    label: deployment impact
+    description: >
+      The affected entity is a deployment record rather than the contract
+      identity itself. The distinction matters because a contract can be
+      re-deployed without its identity changing.
+    family: entity
+    affectedKinds: [DEPLOYMENT]
+    introducedIn: 1.0.0
+  - id: CHANGE
+    label: change impact
+    description: >
+      The finding is triggered by a specific typed change rather than by an
+      inferred propagation, and MUST carry a `changeType`. Used when a diff is
+      the input to an impact analysis.
+    family: trigger
+    requiresChangeType: true
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/impact.schema.json
+    pointer: /properties/impactType/items

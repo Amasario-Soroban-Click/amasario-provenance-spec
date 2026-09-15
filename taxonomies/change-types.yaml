@@ -1,0 +1,61 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: change-types
+name: Change Types
+openness: closed
+consumersMustHandleUnknown: false
+changeClass: normative
+description: >
+  The exhaustive set of ways one snapshot or entity can differ from another. A
+  diff entry MUST classify every difference with exactly one of these terms, and
+  a diff MUST NOT report a difference caused only by non-deterministic ordering
+  or by an unstable identifier.
+terms:
+  - id: ADDED
+    label: added
+    description: >
+      The entity or relationship exists in the after-state and has no
+      counterpart in the before-state.
+    introducedIn: 1.0.0
+  - id: REMOVED
+    label: removed
+    description: >
+      The entity or relationship existed in the before-state and has no
+      counterpart in the after-state.
+    introducedIn: 1.0.0
+  - id: MODIFIED
+    label: modified
+    description: >
+      The entity exists in both states under the same identity and at least one
+      non-identity property differs. Used when the change is not naturally
+      described as an upgrade or downgrade, for example a change of evidence or
+      of confidence.
+    introducedIn: 1.0.0
+  - id: UPGRADED
+    label: upgraded
+    description: >
+      The entity exists in both states and changed to a later version, revision
+      or digest where the ordering is established by the referenced ecosystem
+      (for example a package version or a monotonic ledger sequence). If
+      ordering cannot be established, MODIFIED MUST be used instead: Amasario
+      does not guess ordering.
+    introducedIn: 1.0.0
+  - id: DOWNGRADED
+    label: downgraded
+    description: >
+      The entity exists in both states and changed to an earlier version or
+      revision under the same ordering requirement as UPGRADED.
+    introducedIn: 1.0.0
+  - id: REPLACED
+    label: replaced
+    description: >
+      The entity at a given identity changed to a different entity with no
+      meaningful ordering relationship. The primary example is a contract whose
+      deployed WASM hash changed, which is the change Amasario exists to make
+      visible.
+    introducedIn: 1.0.0
+usedBy:
+  - file: schema/impact.schema.json
+    pointer: /properties/changeType
+  - file: schema/diff.schema.json
+    pointer: /properties/changes/items/properties/changeType

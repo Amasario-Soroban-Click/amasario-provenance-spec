@@ -54,3 +54,8 @@ terms:
       recognised. Distinct from UNVERIFIED, which means the claim is understood
       but unchecked.
     introducedIn: 1.0.0
+usedBy:
+  - file: schema/provenance.schema.json
+    pointer: /properties/verificationStatus
+  - file: schema/attestation.schema.json
+    pointer: /properties/verificationStatus
