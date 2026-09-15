@@ -1,0 +1,25 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: minimal/artifact
+kind: valid
+synthetic: true
+target: https://amasario.dev/spec/v1/schema/artifact.schema.json
+description: >
+  The smallest artifact this specification accepts: an identifier, a class and a
+  digest. The digest is what gives the artifact identity, so an artifact without one
+  is rejected rather than treated as an unnamed blob. The locator is deliberately an
+  example.invalid host, which can never resolve.
+document:
+  id: artifact_wasm_alpha
+  type: WASM
+  digest:
+    algorithm: sha256
+    value: 4bb771fa2d803b40bb8402ab976668ac64b600f4c4187c27483d7dd693a686a3
+  sizeBytes: 48123
+  mediaType: application/wasm
+  locator: https://example.invalid/artifacts/wasm-alpha.wasm
+  derived:
+    - artifact_deployment_alpha
+  reproducible: REPRODUCED
+  evidence:
+    - ev_artifact_wasm_alpha
