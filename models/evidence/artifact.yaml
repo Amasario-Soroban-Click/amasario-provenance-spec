@@ -1,0 +1,63 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/artifact
+name: Artifact Evidence Model
+modelKind: evidence
+concept: EVIDENCE_ARTIFACT
+description: >
+  Evidence about an artifact's existence and identity. The model requires the
+  artifact class alongside the digest, because a digest is a function of bytes and
+  the same bytes are different things depending on what they are claimed to be: a
+  digest with no type cannot tell a reader whether it identifies source, a lockfile
+  or an executable.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is ARTIFACT.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports, for example that a named digest is the digest of a named artifact.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed.
+  - name: artifactType
+    type: string
+    requirement: conditional
+    description: The artifact class the digest was computed over. Required for ARTIFACT evidence.
+  - name: digest
+    type: object
+    requirement: conditional
+    description: The digest. Required for ARTIFACT evidence.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary, where the artifact was obtained from a network rather than locally.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: VERIFIED_BY
+    description: ARTIFACT evidence is what establishes a VERIFIED_BY relationship from a deployed executable to a build artifact.
+  - kind: DERIVED_FROM
+    description: ARTIFACT evidence supports the DERIVED_FROM relationship between an output and its inputs.
+taxonomies:
+  - evidence-types
+  - artifact-types
+invariants:
+  - An ARTIFACT evidence record must carry both artifactType and digest.
+  - The digest algorithm must be one permitted for the declared artifact type.
+  - The claim must identify the artifact, not merely state that a digest exists.
+nonGoals:
+  - This model does not assert that an artifact is the one a producer claimed to have published, only that the record addresses specific content.
+  - This model does not assess artifact content.

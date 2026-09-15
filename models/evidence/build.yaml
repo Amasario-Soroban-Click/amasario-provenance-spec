@@ -1,0 +1,65 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/build
+name: Build Evidence Model
+modelKind: evidence
+concept: EVIDENCE_BUILD
+description: >
+  Evidence about how an artifact was produced. The model requires both a toolchain
+  identity and a configuration digest, because either alone is insufficient to
+  re-run a build: the same source compiled by a different toolchain version, or with
+  different flags, produces different output. Two of the three inputs to a build is
+  not enough to establish anything about its result.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is BUILD.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed.
+  - name: toolchain
+    type: string
+    requirement: conditional
+    description: The toolchain identity the build used. Required for BUILD evidence.
+  - name: configurationDigest
+    type: object
+    requirement: conditional
+    description: Digest of the build configuration. Required for BUILD evidence, because a configuration that cannot be compared cannot be re-used.
+  - name: digest
+    type: object
+    requirement: optional
+    description: Digest over the produced artifact, when this record is what establishes it.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary, where the build evidence was collected from a remote service.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: VERIFIED_BY
+    description: BUILD evidence is what establishes a VERIFIED_BY relationship from an artifact to its build.
+  - kind: BUILT_FROM
+    description: BUILD evidence supports the BUILT_FROM relationship to the source revision it consumed.
+taxonomies:
+  - evidence-types
+invariants:
+  - A BUILD evidence record must carry both toolchain and configurationDigest. A record naming only one cannot support a reproducibility claim.
+  - The toolchain identity must be an exact version, not a range or a floating channel.
+nonGoals:
+  - This model does not execute or re-execute builds.
+  - This model does not assert that a build is trustworthy because its provenance is recorded.

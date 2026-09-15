@@ -1,0 +1,65 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/deployment
+name: Deployment Evidence Model
+modelKind: evidence
+concept: EVIDENCE_DEPLOYMENT
+description: >
+  Evidence that an executable became a contract. The model requires the contract,
+  the transaction, the ledger and the observation boundary together, because a
+  deployment claim spans both a network event and a subsequent observation of the
+  network's state, and only the pair supports a CONFIRMED status.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is DEPLOYMENT.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports, for example that a named executable became a named contract at a named ledger.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed.
+  - name: contractId
+    type: string
+    requirement: conditional
+    description: The contract address the observation concerns. Required for DEPLOYMENT evidence.
+  - name: transactionHash
+    type: string
+    requirement: conditional
+    description: The transaction the observation derives from. Required for DEPLOYMENT evidence.
+  - name: ledger
+    type: integer
+    requirement: conditional
+    description: The ledger the observation derives from. Required for DEPLOYMENT evidence.
+  - name: boundary
+    type: object
+    requirement: conditional
+    description: Observation boundary. Required for DEPLOYMENT evidence, because a deployment observation is meaningful only relative to when it was made.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: DEPLOYED_AS
+    description: DEPLOYMENT evidence supports the DEPLOYED_AS relationship from an executable to a contract.
+  - kind: OBSERVED_IN
+    description: DEPLOYMENT evidence itself references the transaction that carried the deployment.
+taxonomies:
+  - evidence-types
+  - deployment-statuses
+invariants:
+  - A DEPLOYMENT evidence record must carry contractId, transactionHash, ledger and boundary.
+  - Evidence derived from a transaction recorded as unsuccessful must not be used to support a CONFIRMED deployment.
+nonGoals:
+  - This model does not assert that the deploying party was authorised to deploy.
+  - This model does not assert that the contract was written by the authors of the source it was built from.

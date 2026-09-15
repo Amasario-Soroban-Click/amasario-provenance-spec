@@ -1,0 +1,61 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/attestation
+name: Attestation Evidence Model
+modelKind: evidence
+concept: EVIDENCE_ATTESTATION
+description: >
+  Evidence that a statement was made by an identified issuer. This model is the
+  boundary between Amasario and the organisations that operate alongside it: an
+  attestation is evidence about a claim, never a property of the thing the claim
+  concerns. A build attestation therefore says that someone attested to a build, and
+  says nothing about the contract that build produced.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is ATTESTATION.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports. Must be no broader than the claim the issuer actually made.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When Amasario observed the attestation, which is distinct from when the issuer issued it.
+  - name: attestationId
+    type: string
+    requirement: conditional
+    description: The identifier of the attestation record this evidence refers to. Required for ATTESTATION evidence, because evidence pointing at nothing is not evidence.
+  - name: digest
+    type: object
+    requirement: optional
+    description: Digest over the attestation's canonical form, so the exact attested claim can be reconstructed.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary, where the attestation was retrieved from a network or service.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: VERIFIED_BY
+    description: ATTESTATION evidence can support a VERIFIED_BY relationship when the attestation is the thing that establishes the claim.
+taxonomies:
+  - evidence-types
+  - verification-statuses
+invariants:
+  - An ATTESTATION evidence record must name the attestation it refers to.
+  - An attestation whose signature was not checked must be recorded as UNVERIFIED, and the accompanying attestation record must state what checking, if any, was performed.
+  - An attestation must not be used to widen a claim beyond its stated scope. A build attestation cannot support a claim about behaviour, correctness or safety.
+nonGoals:
+  - This model does not establish that an issuer is competent, independent or acting in good faith.
+  - This model does not treat an attestation as a property of an artifact. Attestations are referenced by the claims they support, never embedded as flags.

@@ -1,0 +1,62 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/source
+name: Source Evidence Model
+modelKind: evidence
+concept: EVIDENCE_SOURCE
+description: >
+  Evidence about a source repository, revision or archive. The model requires the
+  repository and revision together, because evidence traceable only to a repository
+  is not traceable at all: a repository changes continuously, so a reader cannot
+  revisit the state the claim was made about without knowing the revision.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is SOURCE.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports. Required so a reader can decide whether it bears on the claim.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed, as distinct from any timestamp the source reports.
+  - name: repository
+    type: string
+    requirement: conditional
+    description: The repository the revision was read from. Required for SOURCE evidence.
+  - name: revision
+    type: string
+    requirement: conditional
+    description: The exact revision observed. Required for SOURCE evidence.
+  - name: digest
+    type: object
+    requirement: optional
+    description: Digest over the content addressed, when the evidence is content-addressable.
+  - name: boundary
+    type: object
+    requirement: optional
+    description: Observation boundary. Not required for SOURCE evidence, which can come from a local checkout rather than a network.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: BUILT_FROM
+    description: SOURCE evidence supports the BUILT_FROM relationship from a build to its source revision.
+taxonomies:
+  - evidence-types
+invariants:
+  - A SOURCE evidence record must carry both repository and revision. Evidence carrying only a repository cannot be revisited.
+  - The claim must state what is being asserted about the revision, not merely that a revision exists.
+nonGoals:
+  - This model does not verify that a revision exists on the host, nor that it is the revision that produced any artifact.
+  - This model does not retain source content.

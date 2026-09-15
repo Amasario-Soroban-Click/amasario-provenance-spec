@@ -1,0 +1,70 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/event
+name: Event Evidence Model
+modelKind: evidence
+concept: EVIDENCE_EVENT
+description: >
+  Evidence from a contract event emitted during execution. Events are the primary
+  observable for cross-contract invocation, which makes this class the backbone of
+  runtime dependency discovery, and also the class most easily over-read: an event
+  shows that something happened, not why or with what effect. The model therefore
+  keeps the emitting contract, the transaction and the ledger mandatory together.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is EVENT.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed.
+  - name: contractId
+    type: string
+    requirement: conditional
+    description: The emitting contract address. Required for EVENT evidence.
+  - name: transactionHash
+    type: string
+    requirement: conditional
+    description: The transaction whose execution emitted the event. Required for EVENT evidence.
+  - name: ledger
+    type: integer
+    requirement: conditional
+    description: The ledger the emitting transaction was included in. Required for EVENT evidence.
+  - name: boundary
+    type: object
+    requirement: conditional
+    description: Observation boundary. Required for EVENT evidence.
+  - name: digest
+    type: object
+    requirement: optional
+    description: Digest over the event payload, so a change to the payload the analysis depended on can be detected without storing contract-defined data.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: OBSERVED_IN
+    description: EVENT evidence is the object of OBSERVED_IN for facts observed through the event.
+  - kind: INVOCATES
+    description: EVENT evidence can support an INVOCATES relationship where the event record identifies the caller and callee.
+taxonomies:
+  - evidence-types
+invariants:
+  - An EVENT evidence record must carry contractId, transactionHash, ledger and boundary.
+  - An event emitted during a transaction recorded as unsuccessful must not be cited as evidence that the effect it describes occurred.
+  - Event payloads must not be modelled beyond a digest, because their encoding is contract-defined and guessing it would invent semantics.
+nonGoals:
+  - This model does not interpret contract-defined event payloads.
+  - This model does not assert that an event's name reflects the effect it describes.

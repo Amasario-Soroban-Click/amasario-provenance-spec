@@ -1,0 +1,64 @@
+apiVersion: amasario.dev/v1
+specVersion: 1.0.0
+id: evidence/transaction
+name: Transaction Evidence Model
+modelKind: evidence
+concept: EVIDENCE_TRANSACTION
+description: >
+  Evidence from a ledger transaction. This is the strongest evidence class Amasario
+  has for what happened on a network, and the model makes the success flag mandatory
+  for that reason: a transaction is evidence of an attempt, and whether its intended
+  effect occurred is a separate fact that nothing else in the evidence set can
+  recover.
+schema:
+  id: https://amasario.dev/spec/v1/schema/evidence.schema.json
+  pointer: ''
+fields:
+  - name: id
+    type: string
+    requirement: always
+    description: Evidence identifier, referenced by every claim relying on this record.
+  - name: type
+    type: string
+    requirement: always
+    description: Evidence class, which for this model is TRANSACTION.
+  - name: claim
+    type: string
+    requirement: always
+    description: The exact claim this record supports. For a transaction, the claim must state the effect being evidenced rather than restating the transaction's existence.
+  - name: observedAt
+    type: string
+    requirement: always
+    description: When this record was observed.
+  - name: transactionHash
+    type: string
+    requirement: conditional
+    description: The transaction hash. Required for TRANSACTION evidence.
+  - name: ledger
+    type: integer
+    requirement: conditional
+    description: The ledger the transaction was included in. Required for TRANSACTION evidence.
+  - name: successful
+    type: boolean
+    requirement: conditional
+    description: Whether the transaction succeeded. Required for TRANSACTION evidence, and the reason this class cannot be reduced to a hash and a ledger.
+  - name: boundary
+    type: object
+    requirement: conditional
+    description: Observation boundary. Required for TRANSACTION evidence.
+  - name: supportsRelationships
+    type: array
+    requirement: optional
+    description: Identifiers of the relationships this evidence is scoped to.
+relations:
+  - kind: OBSERVED_IN
+    description: TRANSACTION evidence is the object of OBSERVED_IN for every fact observed within it.
+taxonomies:
+  - evidence-types
+invariants:
+  - A TRANSACTION evidence record must carry transactionHash, ledger, successful and boundary.
+  - A record with successful set to false must not be cited as evidence that its intended effect occurred. A rule enforces this rather than leaving it to interpretation.
+  - The claim must describe what the transaction established, not merely that it exists.
+nonGoals:
+  - This model does not assert that a successful transaction achieved a particular intent, only that the network recorded it as successful.
+  - This model does not attempt to determine whether a transaction was submitted by the party that benefits from it.
