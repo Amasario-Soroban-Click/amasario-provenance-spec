@@ -25,6 +25,16 @@ import {
 const entries = loadSchemaRegistry();
 const ajv = createValidator();
 
+/**
+ * A copy of `record` with `key` omitted.
+ *
+ * Written as a rebuild rather than a `delete` so the omission is a value the test
+ * holds, and so the same helper works for a field named by a loop variable.
+ */
+function without(record: object, key: string): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([name]) => name !== key));
+}
+
 describe('schema registry', () => {
   it('contains exactly the expected number of schemas', () => {
     expect(entries).toHaveLength(EXPECTED_SCHEMA_COUNT);
@@ -148,6 +158,196 @@ describe('a schema rejects what it does not define', () => {
     expect(validate?.(document)).toBe(false);
     const paths = (validate?.errors ?? []).map((error) => `${error.keyword}${error.instancePath}`);
     expect(paths).toContain('pattern/contractId');
+  });
+});
+
+describe('error schema', () => {
+  // This schema is exercised here rather than by a fixture, and the reason is recorded
+  // in `scripts/validate-fixtures.ts`: an error record is produced by an
+  // implementation when an analysis fails, and this repository performs no analysis,
+  // so a fixture would assert the shape of a failure nothing here can produce.
+  const errorSchema = `${SCHEMA_ID_PREFIX}error.schema.json`;
+
+  const wellFormed = {
+    code: 'AMASARIO_NETWORK_UNAVAILABLE',
+    category: 'NETWORK',
+    message: 'The RPC endpoint did not respond within the configured timeout.',
+    retryable: true,
+    path: 'contracts/CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE',
+  };
+
+  it('accepts a well-formed error record', () => {
+    const validate = ajv.getSchema(errorSchema);
+    expect(validate?.(wellFormed), JSON.stringify(validate?.errors ?? [])).toBe(true);
+  });
+
+  it('rejects a category outside the enumeration rather than collapsing failure kinds', () => {
+    const validate = ajv.getSchema(errorSchema);
+    const valid = validate?.({ ...wellFormed, category: 'SOMETHING_WENT_WRONG' });
+    expect(valid).toBe(false);
+    expect(
+      (validate?.errors ?? []).map((error) => `${error.keyword}@${error.instancePath}`),
+    ).toContain('enum@/category');
+  });
+
+  it('requires a code, a category and a message on every error', () => {
+    const validate = ajv.getSchema(errorSchema);
+    for (const field of ['code', 'category', 'message']) {
+      expect(validate?.(without(wellFormed, field)), `omitting ${field}`).toBe(false);
+    }
+  });
+
+  it('rejects an unrecognised property rather than letting it pass as detail', () => {
+    const validate = ajv.getSchema(errorSchema);
+    expect(validate?.({ ...wellFormed, stack: 'trace' })).toBe(false);
+  });
+
+  it('documents every category the engine is expected to distinguish', () => {
+    const entry = entries.find((candidate) => candidate.id === errorSchema);
+    const properties = entry?.document.properties;
+    expect(properties).toBeTypeOf('object');
+    const category = (properties as Record<string, { enum?: string[] }>).category;
+    // Collapsing failures into one generic error is explicitly prohibited, so the
+    // categories must cover the layers rather than a single catch-all.
+    expect(category?.enum).toContain('NETWORK');
+    expect(category?.enum).toContain('SPECIFICATION_COMPATIBILITY');
+    expect((category?.enum ?? []).length).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe('invocation and event schemas', () => {
+  // Both are engine outputs rather than part of a provenance document tree, so they are
+  // exercised here rather than by a fixture. See `scripts/validate-fixtures.ts`.
+  const invocationSchema = `${SCHEMA_ID_PREFIX}invocation.schema.json`;
+  const eventSchema = `${SCHEMA_ID_PREFIX}event.schema.json`;
+
+  const invocation = {
+    caller: 'C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB',
+    callee: 'C5AW7RAJS26BSZ27BPUE62MOJ3C6WUZC2M6HJG66BDXHEBLDRBMRKQSP',
+    function: 'transfer',
+    ledger: 1234567,
+    transactionHash: '00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712',
+    successful: true,
+    callDepth: 1,
+  };
+
+  const event = {
+    id: 'evt-1234567-1-0',
+    contractId: 'C2IJTO436D5EBFSQZM4AEWZUDEKNWWPJRHGFJOFGNQKE445P5FSA26XB',
+    type: 'CONTRACT',
+    ledger: 1234567,
+    transactionHash: '00db878209ffecedbb99166310e2111e73150638dd2c10da695167103fbd0712',
+    eventIndex: 0,
+    inSuccessfulTransaction: true,
+  };
+
+  it('accepts a well-formed invocation and event', () => {
+    const validateInvocation = ajv.getSchema(invocationSchema);
+    const validateEvent = ajv.getSchema(eventSchema);
+    expect(validateInvocation?.(invocation), JSON.stringify(validateInvocation?.errors ?? [])).toBe(
+      true,
+    );
+    expect(validateEvent?.(event), JSON.stringify(validateEvent?.errors ?? [])).toBe(true);
+  });
+
+  it('requires an invocation to name what was called, where and in which transaction', () => {
+    const validate = ajv.getSchema(invocationSchema);
+    for (const field of ['callee', 'ledger', 'transactionHash']) {
+      expect(validate?.(without(invocation, field)), `omitting ${field}`).toBe(false);
+    }
+  });
+
+  it('rejects an event type outside the network-reported categories', () => {
+    const validate = ajv.getSchema(eventSchema);
+    expect(validate?.({ ...event, type: 'TELEMETRY' })).toBe(false);
+    expect(
+      (validate?.errors ?? []).map((error) => `${error.keyword}@${error.instancePath}`),
+    ).toContain('enum@/type');
+  });
+
+  it('rejects a negative ledger, which cannot be a Stellar ledger sequence', () => {
+    const validate = ajv.getSchema(eventSchema);
+    expect(validate?.({ ...event, ledger: -1 })).toBe(false);
+  });
+});
+
+describe('diff schema', () => {
+  // A diff compares two snapshots, so it is not reachable from a document tree and is
+  // exercised here rather than by a fixture.
+  const diffSchema = `${SCHEMA_ID_PREFIX}diff.schema.json`;
+  const digest = { algorithm: 'sha256', value: 'a'.repeat(64) };
+
+  const wellFormed = {
+    apiVersion: 'amasario.dev/v1',
+    specVersion: '1.0.0',
+    before: { id: 'snap-a', contentDigest: digest },
+    after: { id: 'snap-b', contentDigest: digest },
+    comparisonMode: 'CANONICAL',
+    comparable: true,
+    changes: [
+      {
+        id: 'change-1',
+        category: 'RELATIONSHIP_ADDED',
+        changeType: 'ADDED',
+        entity: {
+          kind: 'CONTRACT',
+          id: 'CXGEEQZSI4JVO3U3REEWJTQJ544OBLIBCB53KT3BIXK7JABDBZWU6S3I',
+        },
+      },
+    ],
+    summary: { total: 1, byCategory: { RELATIONSHIP_ADDED: 1 }, byChangeType: { ADDED: 1 } },
+  };
+
+  it('accepts a well-formed diff', () => {
+    const validate = ajv.getSchema(diffSchema);
+    expect(validate?.(wellFormed), JSON.stringify(validate?.errors ?? [])).toBe(true);
+  });
+
+  it('requires both snapshots to be referenced by id and digest', () => {
+    const validate = ajv.getSchema(diffSchema);
+    // A diff whose inputs are not identified cannot be re-derived, which is the whole
+    // reason the snapshots are referenced rather than embedded.
+    expect(validate?.({ ...wellFormed, before: { id: 'snap-a' } })).toBe(false);
+  });
+
+  it('requires a comparison mode on every diff', () => {
+    const validate = ajv.getSchema(diffSchema);
+    expect(validate?.(without(wellFormed, 'comparisonMode'))).toBe(false);
+  });
+
+  it('constrains the incomparable reason to the declared set', () => {
+    const validate = ajv.getSchema(diffSchema);
+    const validateReason = (reason: string): boolean =>
+      validate?.({ ...wellFormed, comparable: false, incomparableReason: reason }) === true;
+    for (const reason of [
+      'API_VERSION_MISMATCH',
+      'SPEC_VERSION_INCOMPATIBLE',
+      'NETWORK_MISMATCH',
+      'BOUNDARY_ORDER_INVALID',
+      'MALFORMED_SNAPSHOT',
+    ]) {
+      expect(validateReason(reason), reason).toBe(true);
+    }
+    // An unclassified reason would let an implementation invent an incomparability
+    // that a consumer cannot act on.
+    expect(validateReason('BECAUSE_I_SAID_SO')).toBe(false);
+  });
+
+  it('constrains change categories and change types to the taxonomies', () => {
+    const validate = ajv.getSchema(diffSchema);
+    const withCategory = (category: string): boolean =>
+      validate?.({
+        ...wellFormed,
+        changes: [{ ...wellFormed.changes[0], category }],
+      }) === true;
+    expect(withCategory('WASM_IDENTITY_CHANGED')).toBe(true);
+    expect(withCategory('SOMETHING_ELSE')).toBe(false);
+    expect(
+      validate?.({
+        ...wellFormed,
+        changes: [{ ...wellFormed.changes[0], changeType: 'MUTATED' }],
+      }),
+    ).toBe(false);
   });
 });
 

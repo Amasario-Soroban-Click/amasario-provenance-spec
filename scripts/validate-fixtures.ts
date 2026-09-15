@@ -36,6 +36,34 @@ import { createValidator } from './validate-schema.js';
 export const EXPECTED_FIXTURE_COUNT = 17;
 export const EXPECTED_EXAMPLE_COUNT = 8;
 
+/**
+ * Schemas deliberately not exercised by a fixture or example, and where they are
+ * exercised instead.
+ *
+ * Four schemas describe records that stand outside a provenance document tree: a
+ * diff compares two snapshots, and an invocation, an event and an error are records
+ * an implementation produces about an observation or a failure. None of them is
+ * reachable by `$ref` from a document a fixture can target, and this repository
+ * performs no analysis, so a fixture here would be asserting the shape of a record
+ * that no artefact in this repository can produce -- an example that looked
+ * authoritative while resting on nothing.
+ *
+ * They are not left unverified. `tests/schema` accepts a well-formed instance of each
+ * and rejects a malformed one, which is the property a fixture would actually have
+ * established. The substitution is recorded per schema so that an exemption always
+ * names its substitute; an exemption that could not would be a gap.
+ */
+const EXERCISED_BY_TESTS_INSTEAD: Readonly<Record<string, string>> = {
+  'https://amasario.dev/spec/v1/schema/diff.schema.json':
+    'tests/schema (`diff schema` cases) rather than a fixture',
+  'https://amasario.dev/spec/v1/schema/error.schema.json':
+    'tests/schema (`error schema` cases) rather than a fixture',
+  'https://amasario.dev/spec/v1/schema/event.schema.json':
+    'tests/schema (`event schema` cases) rather than a fixture',
+  'https://amasario.dev/spec/v1/schema/invocation.schema.json':
+    'tests/schema (`invocation schema` cases) rather than a fixture',
+};
+
 interface Reference {
   readonly id: string;
   readonly where: string;
@@ -146,6 +174,36 @@ export function checkCrossReferences(reporter: Reporter, where: string, document
       }
     }
   }
+}
+
+/**
+ * The transitive `$ref` closure from the schemas a fixture names directly.
+ *
+ * Coverage is counted over reachability rather than over direct targets, because a
+ * composite document validates its sub-schemas as a side effect: a fixture targeting
+ * `provenance.schema.json` genuinely exercises the contract, wasm, source, build,
+ * artifact, deployment, evidence, confidence and attestation schemas, and counting
+ * only the named target reports those as untested when they are tested hardest.
+ */
+function referenceClosure(direct: ReadonlySet<string>): Set<string> {
+  const registry = new Map(loadSchemaRegistry().map((entry) => [entry.id, entry.document]));
+  const reachable = new Set<string>();
+  const pending = [...direct];
+  while (pending.length > 0) {
+    const id = pending.pop();
+    if (id === undefined || reachable.has(id) || !registry.has(id)) continue;
+    reachable.add(id);
+    // A reference is a `$ref` to a known schema id. Matching against the registry's
+    // own ids avoids parsing `$ref` strings, and a `$ref` that does not name a known
+    // schema never resolves, so the registry compilation would have failed already.
+    const serialised = JSON.stringify(registry.get(id));
+    for (const candidate of registry.keys()) {
+      if (candidate !== id && !reachable.has(candidate) && serialised.includes(candidate)) {
+        pending.push(candidate);
+      }
+    }
+  }
+  return reachable;
 }
 
 function main(): number {
@@ -291,9 +349,18 @@ function main(): number {
     );
   }
 
-  const uncovered = [...schemaIds].filter((id) => !coveredSchemas.has(id));
+  const exercised = referenceClosure(coveredSchemas);
+  const uncovered = [...schemaIds]
+    .filter((id) => !exercised.has(id))
+    .filter((id) => !(id in EXERCISED_BY_TESTS_INSTEAD));
   for (const id of uncovered) {
     reporter.note(`${id} is not exercised by any fixture or example`);
+  }
+  // A schema exempted here is still verified, just not from this file: the reason
+  // names where. An exemption that cannot say where is a gap, so the map is
+  // exhaustive by construction and every entry states its substitute.
+  for (const [id, reason] of Object.entries(EXERCISED_BY_TESTS_INSTEAD)) {
+    reporter.note(`${id} is exercised by ${reason}`);
   }
   return reporter.finish(`${fixtureCount} fixtures and ${exampleCount} examples`);
 }
