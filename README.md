@@ -5,6 +5,7 @@
 [![Fixture and vector validation](https://github.com/Amasario-Soroban-Click/amasario-provenance-spec/actions/workflows/fixture-validation.yml/badge.svg?branch=main)](https://github.com/Amasario-Soroban-Click/amasario-provenance-spec/actions/workflows/fixture-validation.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Version: 1.0.0](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
+[![Explorer](https://img.shields.io/badge/explorer-live-000000?logo=vercel)](https://amasario-explorer.vercel.app)
 [![Walkthrough](https://img.shields.io/badge/%E2%96%B6_watch-the_5--minute_walkthrough-58a6ff)](https://amasario-explorer.vercel.app/pitch/amasario-pitch-v2.mp4)
 
 [![Press play: the five-minute walkthrough](https://amasario-explorer.vercel.app/pitch/amasario-pitch-thumbnail.png)](https://amasario-explorer.vercel.app/pitch/amasario-pitch-v2.mp4)
